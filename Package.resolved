@@ -1,13 +1,13 @@
 {
-  "originHash" : "6cb587d51c5623497deff66c39e2c74987786158f9b15d835b3d56759335ad3a",
+  "originHash" : "c40c0b2ea7e41223650c5634fe8a2597a69462bfbfa350d6db111f2e201fa6d2",
   "pins" : [
     {
       "identity" : "fp",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/luizmb/FP.git",
       "state" : {
-        "revision" : "dda7d6cb9bc20a23f0c89e5447df258e5cd17e28",
-        "version" : "1.8.1"
+        "revision" : "c1b32932021b444d8b21ca873c80bfcd4c6b8ecb",
+        "version" : "1.13.0"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
-        "version" : "602.0.0"
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
       }
     }
   ],

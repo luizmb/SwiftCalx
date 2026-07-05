@@ -29,6 +29,9 @@ extension AcceleratedVector {
     public static func foldMap<M: Monoid>(
         _ f: @escaping @Sendable (Double) -> M
     ) -> @Sendable (AcceleratedVector) -> M {
-        { vector in mconcat(vector.storage.map(f)) }
+        // Qualify with `M.` — FP's `Monoid.mconcat` static method otherwise shadows the free
+        // `mconcat<M>` inside this `AcceleratedVector: Monoid` extension (it resolves to `Self`,
+        // giving "cannot convert '[M]' to '[AcceleratedVector]'"). Surfaced by FP 1.13.
+        { vector in M.mconcat(vector.storage.map(f)) }
     }
 }

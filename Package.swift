@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -48,7 +48,7 @@ let package = Package(
         .library(name: "SwiftCalx", targets: ["SwiftCalx"])
     ],
     dependencies: [
-        .package(url: "https://github.com/luizmb/FP.git", from: "1.8.1"),
+        .package(url: "https://github.com/luizmb/FP.git", from: "1.13.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.0")
     ],
     targets: customOperator + calculus + [
