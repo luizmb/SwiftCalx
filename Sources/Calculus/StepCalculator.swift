@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 import RealNumber
@@ -24,41 +26,41 @@ public struct StepCalculator<Scalar: ℝ>: Sendable {
     }
 }
 
-extension StepCalculator {
+public extension StepCalculator {
     /// `h = √ε`. Optimal for one-sided differences (Newton/backward) where the leading
     /// truncation error is `O(h)` and round-off is `O(ε/h)`; balancing them gives `h ~ √ε`.
-    public static var epsilonSquareRoot: Self {
+    static var epsilonSquareRoot: Self {
         Self { _, _ in Scalar.epsilon.squareRoot() }
     }
 
     /// `h = ∛ε`. Optimal for symmetric central differences (truncation `O(h²)`,
     /// round-off `O(ε/h)`; balance gives `h ~ ε^(1/3)`).
-    public static var epsilonCubeRoot: Self {
+    static var epsilonCubeRoot: Self {
         Self { _, _ in Scalar.epsilon.cubeRoot() }
     }
 
     /// `h = √ε · x`. Scales with the magnitude of the evaluation point — useful when
     /// `x` ranges over several orders of magnitude. Degenerates to `0` at `x = 0`;
     /// use ``adaptativeZeroHigh`` if your evaluation might land exactly on the origin.
-    public static var adaptative: Self {
+    static var adaptative: Self {
         Self { x, _ in Scalar.epsilon.squareRoot() * x }
     }
 
     /// Like ``adaptative`` but falls back to `ε` at `x = 0` so a derivative there
     /// still gets a non-zero step.
-    public static var adaptativeZeroHigh: Self {
+    static var adaptativeZeroHigh: Self {
         Self { x, _ in x == 0 ? Scalar.epsilon : Scalar.epsilon.squareRoot() * x }
     }
 
     /// A constant `h`, useful for tests with known accuracy and for matching
     /// hand-computed reference values.
-    public static func constant(_ h: Scalar) -> Self {
+    static func constant(_ h: Scalar) -> Self {
         Self { _, _ in h }
     }
 
     /// A user-supplied function `x ↦ h(x)`. Lets the caller encode any
     /// problem-specific step heuristic without writing a new `StepCalculator`.
-    public static func customHforX(_ hForX: Fn<Scalar>) -> Self {
+    static func customHforX(_ hForX: Fn<Scalar>) -> Self {
         Self { x, _ in hForX(x) }
     }
 }

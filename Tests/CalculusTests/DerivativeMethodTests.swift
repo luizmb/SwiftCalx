@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 @testable import Calculus
 import Foundation
 import RealNumber
@@ -43,7 +45,7 @@ final class DerivativeMethodTests: XCTestCase {
         let three = DerivativeMethod<Double>.CentralStencil.threePoint(order: 2, step: .constant(0.1))
         let five = DerivativeMethod<Double>.CentralStencil.fivePoint(order: 2, step: .constant(0.1))
         let x = 1.0
-        let truth = -cos(x)  // d²/dx² cos(x) = -cos(x)
+        let truth = -cos(x) // d²/dx² cos(x) = -cos(x)
         let threeError = abs(three.deriving(cosFn)(x) - truth)
         let fiveError = abs(five.deriving(cosFn)(x) - truth)
         XCTAssertLessThan(fiveError, threeError / 10, "5-point second derivative should be much more accurate")
@@ -68,13 +70,13 @@ final class DerivativeMethodTests: XCTestCase {
     // MARK: - One-sided stencils
 
     func testForwardStencilTwoPoint() {
-        let sqFn = Fn<Double> { $0 * $0 }  // f'(x) = 2x
+        let sqFn = Fn<Double> { $0 * $0 } // f'(x) = 2x
         let method = DerivativeMethod<Double>.ForwardStencil.twoPoint(step: .constant(1e-6))
         XCTAssertEqual(method.deriving(sqFn)(3), 6.0, accuracy: 1e-4)
     }
 
     func testForwardStencilThreePointSecondDerivative() {
-        let cubeFn = Fn<Double> { $0 * $0 * $0 }  // f''(x) = 6x
+        let cubeFn = Fn<Double> { $0 * $0 * $0 } // f''(x) = 6x
         let method = DerivativeMethod<Double>.ForwardStencil.threePoint(order: 2, step: .constant(0.001))
         XCTAssertEqual(method.deriving(cubeFn)(2), 12.0, accuracy: 1e-2)
     }

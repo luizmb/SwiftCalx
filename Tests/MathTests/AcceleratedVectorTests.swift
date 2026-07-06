@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import XCTest
 
@@ -30,7 +32,9 @@ final class VectorTests: XCTestCase {
     func testIterationViaForEach() {
         let v = AcceleratedVector([1.0, 2.0, 3.0])
         var sum = 0.0
-        for x in v { sum += x }
+        for x in v {
+            sum += x
+        }
         XCTAssertEqual(sum, 6.0)
     }
 
@@ -43,7 +47,7 @@ final class VectorTests: XCTestCase {
 
     func testCollectionMapReturnsArray() {
         let v = AcceleratedVector([1.0, 2.0, 3.0])
-        let doubled: [Double] = v.map { $0 * 2 }   // Collection.map → [T]
+        let doubled: [Double] = v.map { $0 * 2 } // Collection.map → [T]
         XCTAssertEqual(doubled, [2.0, 4.0, 6.0])
     }
 
@@ -128,6 +132,6 @@ final class VectorTests: XCTestCase {
         ])
         let v = AcceleratedVector([1.0, 2.0, 3.0])
         let result = A.apply(to: v)
-        XCTAssertEqual(result, AcceleratedVector([14.0, 32.0]))   // [1+4+9, 4+10+18]
+        XCTAssertEqual(result, AcceleratedVector([14.0, 32.0])) // [1+4+9, 4+10+18]
     }
 }

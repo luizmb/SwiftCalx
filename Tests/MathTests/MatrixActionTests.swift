@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import MathOperators
 import XCTest
@@ -22,9 +24,9 @@ final class MatrixActionTests: XCTestCase {
         let A = Matrix<Double>(rows: 2, columns: 2, storage: [2, 0, 0, 3])
         let trajectory = A.actions(on: [1, 1], count: 4)
         XCTAssertEqual(trajectory.count, 5)
-        XCTAssertEqual(trajectory[2], [4, 9])      // A² · [1,1]
-        XCTAssertEqual(trajectory[3], [8, 27])     // A³ · [1,1]
-        XCTAssertEqual(trajectory[4], [16, 81])    // A⁴ · [1,1]
+        XCTAssertEqual(trajectory[2], [4, 9]) // A² · [1,1]
+        XCTAssertEqual(trajectory[3], [8, 27]) // A³ · [1,1]
+        XCTAssertEqual(trajectory[4], [16, 81]) // A⁴ · [1,1]
     }
 
     func testActionsMatchesMatrixPowerTimesVector() {

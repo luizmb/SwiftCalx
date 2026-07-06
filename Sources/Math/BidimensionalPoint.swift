@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 import RealNumber
@@ -18,22 +20,22 @@ public struct BidimensionalPoint<T: ℝ>: Sendable, Equatable {
 
 // MARK: - Vector space
 
-extension BidimensionalPoint {
+public extension BidimensionalPoint {
     /// The additive identity: the origin point `(0, 0)`. Combined with elementwise
     /// `+` and scalar `*`, makes `BidimensionalPoint` a vector space over `T`.
-    public static var zero: BidimensionalPoint {
+    static var zero: BidimensionalPoint {
         BidimensionalPoint(x: .zero, y: .zero)
     }
 
-    public static func + (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
+    static func + (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 
-    public static func - (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
+    static func - (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
 
-    public static func * (scalar: T, point: BidimensionalPoint) -> BidimensionalPoint {
+    static func * (scalar: T, point: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: scalar * point.x, y: scalar * point.y)
     }
 }

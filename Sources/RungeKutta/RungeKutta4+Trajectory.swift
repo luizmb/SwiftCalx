@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import RealNumber
 
-extension RungeKutta4 {
+public extension RungeKutta4 {
     /// Integrate a vector-state ODE `dy/dt = f(t, y)` from `t = 0` to `t = end` using
     /// a fixed RK4 step of size `step`, returning the full `(time, state)` trajectory.
     ///
@@ -17,7 +19,7 @@ extension RungeKutta4 {
     /// `State` is generic over any ``VectorState``; the scalar must be `Double` so
     /// `stride(...)` works (`State.Scalar` is not required to be `Strideable` in
     /// general). For non-`Double` scalars, write the equivalent fold by hand.
-    public static func trajectory<State: VectorState>(
+    static func trajectory<State: VectorState>(
         from initialState: State,
         derivative: @escaping (Double, State) -> State,
         step: Double,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Calculus
 import Foundation
 import Math
@@ -28,14 +30,14 @@ import RealNumber
 /// - https://en.wikipedia.org/wiki/Runge–Kutta_methods
 /// - https://rosettacode.org/wiki/Runge-Kutta_method (the regression case used in the
 ///   `RungeKutta4ScalarTests.testRosettacode` test).
-public enum RungeKutta4 { }
+public enum RungeKutta4 {}
 
-extension RungeKutta4 {
+public extension RungeKutta4 {
     /// Scalar RK4 step. Returns the function `(point, Δx) → Δy` — pure delta, *not*
     /// `yₙ + Δy`. Wrap with ``calculateNextPoint(Δx:stepCalculator:)`` (or call
     /// `lastPoint.y + Δy` yourself) to advance.
-    public static func rk4<T: ℝ & VectorState>(_ fn: @escaping (BidimensionalPoint<T>) -> T)
-    -> (/* lastPoint pt𝓃: */ BidimensionalPoint<T>, /* Δx: */ T) -> T where T.Scalar == T {
+    static func rk4<T: ℝ & VectorState>(_ fn: @escaping (BidimensionalPoint<T>) -> T)
+    -> ( /* lastPoint pt𝓃: */ BidimensionalPoint<T>, /* Δx: */ T) -> T where T.Scalar == T {
         { pt𝓃, Δx in
             let Δy1 = Δx * fn(pt𝓃)
             let Δy2 = Δx * fn(BidimensionalPoint(x: pt𝓃.x + Δx / 2, y: pt𝓃.y + Δy1 / 2))
@@ -48,7 +50,7 @@ extension RungeKutta4 {
     /// `reduce`-shaped helper that appends the next `(x + Δx, y + Δy)` point.
     /// The `currentPointInTime` argument from the reducing sequence is unused —
     /// it's only here so the signature lines up with `reduce`'s `(Accumulator, Element)`.
-    public static func calculateNextPoint<T: ℝ>(
+    static func calculateNextPoint<T: ℝ>(
         Δx: T,
         stepCalculator: @escaping (BidimensionalPoint<T>, T) -> T
     ) -> ([BidimensionalPoint<T>], T) -> [BidimensionalPoint<T>] {

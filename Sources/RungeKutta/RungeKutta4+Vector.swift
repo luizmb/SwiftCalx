@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Calculus
 import Math
 import RealNumber
 
-extension RungeKutta4 {
+public extension RungeKutta4 {
     /// Vector-state RK4. The derivative depends on the whole state vector at each
     /// substep, which is required for coupled ODE systems — multi-compartment
     /// biokinetic models, harmonic oscillators, predator–prey, anything where
@@ -15,9 +17,9 @@ extension RungeKutta4 {
     /// `T: ℝ` (the typical biokinetic case) and the concrete real-number types
     /// themselves (so the scalar overload above could equivalently be implemented
     /// in terms of this one — kept separate for ergonomic `BidimensionalPoint` use).
-    public static func rk4<State: VectorState>(
+    static func rk4<State: VectorState>(
         _ fn: @escaping (State.Scalar, State) -> State
-    ) -> (/* t */ State.Scalar, /* y */ State, /* Δt */ State.Scalar) -> State {
+    ) -> ( /* t */ State.Scalar, /* y */ State, /* Δt */ State.Scalar) -> State {
         { t, y, Δt in
             let half: State.Scalar = Δt / 2
             let k1 = fn(t, y)
@@ -30,7 +32,7 @@ extension RungeKutta4 {
 
     /// Reduce-shaped helper that appends the next `(time, state)` pair to the trajectory.
     /// Use as the closure passed to `stride(...).reduce(...)`.
-    public static func calculateNextState<State: VectorState>(
+    static func calculateNextState<State: VectorState>(
         Δt: State.Scalar,
         stepCalculator: @escaping (State.Scalar, State, State.Scalar) -> State
     ) -> (

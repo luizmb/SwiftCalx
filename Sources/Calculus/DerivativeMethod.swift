@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 import RealNumber
@@ -89,21 +91,21 @@ extension DerivativeMethod {
         public static func threePoint(order: Int, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             switch order {
             case 1:
-                return DerivativeMethod(order: 1) { fn in
+                DerivativeMethod(order: 1) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x + h) - fn(x - h)) / (2 * h)
                     }
                 }
             case 2:
-                return DerivativeMethod(order: 2) { fn in
+                DerivativeMethod(order: 2) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x + h) - 2 * fn(x) + fn(x - h)) / (h * h)
                     }
                 }
             default:
-                return .nanMethod(order: order)
+                .nanMethod(order: order)
             }
         }
 
@@ -119,35 +121,35 @@ extension DerivativeMethod {
         public static func fivePoint(order: Int, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             switch order {
             case 1:
-                return DerivativeMethod(order: 1) { fn in
+                DerivativeMethod(order: 1) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (-fn(x + 2 * h) + 8 * fn(x + h) - 8 * fn(x - h) + fn(x - 2 * h)) / (12 * h)
                     }
                 }
             case 2:
-                return DerivativeMethod(order: 2) { fn in
+                DerivativeMethod(order: 2) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (-fn(x + 2 * h) + 16 * fn(x + h) - 30 * fn(x) + 16 * fn(x - h) - fn(x - 2 * h)) / (12 * h * h)
                     }
                 }
             case 3:
-                return DerivativeMethod(order: 3) { fn in
+                DerivativeMethod(order: 3) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x + 2 * h) - 2 * fn(x + h) + 2 * fn(x - h) - fn(x - 2 * h)) / (2 * h * h * h)
                     }
                 }
             case 4:
-                return DerivativeMethod(order: 4) { fn in
+                DerivativeMethod(order: 4) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x + 2 * h) - 4 * fn(x + h) + 6 * fn(x) - 4 * fn(x - h) + fn(x - 2 * h)) / (h * h * h * h)
                     }
                 }
             default:
-                return .nanMethod(order: order)
+                .nanMethod(order: order)
             }
         }
     }
@@ -165,11 +167,11 @@ extension DerivativeMethod {
 
 // MARK: - One-sided stencils (forward / backward)
 
-extension DerivativeMethod {
+public extension DerivativeMethod {
     /// Forward finite-difference stencils using `x, x+h, x+2h, …`.
     /// Use near a left boundary of the function's domain where backward / central
     /// stencils would fall outside.
-    public enum ForwardStencil {
+    enum ForwardStencil {
         /// Two-point forward (Newton quotient): `f'(x) ≈ [f(x+h) − f(x)] / h`. Error `O(h)`.
         public static func twoPoint(order: Int = 1, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             guard order == 1 else { return .nanMethod(order: order) }
@@ -188,28 +190,28 @@ extension DerivativeMethod {
         public static func threePoint(order: Int, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             switch order {
             case 1:
-                return DerivativeMethod(order: 1) { fn in
+                DerivativeMethod(order: 1) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (-3 * fn(x) + 4 * fn(x + h) - fn(x + 2 * h)) / (2 * h)
                     }
                 }
             case 2:
-                return DerivativeMethod(order: 2) { fn in
+                DerivativeMethod(order: 2) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x) - 2 * fn(x + h) + fn(x + 2 * h)) / (h * h)
                     }
                 }
             default:
-                return .nanMethod(order: order)
+                .nanMethod(order: order)
             }
         }
     }
 
     /// Backward finite-difference stencils using `x, x-h, x-2h, …`.
     /// Use near a right boundary of the function's domain.
-    public enum BackwardStencil {
+    enum BackwardStencil {
         /// Two-point backward: `f'(x) ≈ [f(x) − f(x−h)] / h`. Error `O(h)`.
         public static func twoPoint(order: Int = 1, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             guard order == 1 else { return .nanMethod(order: order) }
@@ -228,21 +230,21 @@ extension DerivativeMethod {
         public static func threePoint(order: Int, step: StepCalculator<Scalar>) -> DerivativeMethod<Scalar> {
             switch order {
             case 1:
-                return DerivativeMethod(order: 1) { fn in
+                DerivativeMethod(order: 1) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (3 * fn(x) - 4 * fn(x - h) + fn(x - 2 * h)) / (2 * h)
                     }
                 }
             case 2:
-                return DerivativeMethod(order: 2) { fn in
+                DerivativeMethod(order: 2) { fn in
                     Fn { x in
                         let h = step.calculate(x, fn)
                         return (fn(x) - 2 * fn(x - h) + fn(x - 2 * h)) / (h * h)
                     }
                 }
             default:
-                return .nanMethod(order: order)
+                .nanMethod(order: order)
             }
         }
     }
@@ -250,7 +252,7 @@ extension DerivativeMethod {
 
 // MARK: - Richardson extrapolation (accuracy-boosting combinator)
 
-extension DerivativeMethod where Scalar == Double {
+public extension DerivativeMethod where Scalar == Double {
     /// Richardson extrapolation — turns a method of error `O(h^p)` into one of
     /// error `O(h^(p+q))` by combining two evaluations at different step sizes.
     ///
@@ -279,7 +281,7 @@ extension DerivativeMethod where Scalar == Double {
     ///   finite differences of physical problems …*. Philosophical Transactions
     ///   of the Royal Society A 210: 307–357.
     /// - https://en.wikipedia.org/wiki/Richardson_extrapolation
-    public static func richardsonExtrapolation(
+    static func richardsonExtrapolation(
         coarse: DerivativeMethod<Double>,
         fine: DerivativeMethod<Double>,
         leadingOrder: Int = 2
@@ -297,9 +299,9 @@ extension DerivativeMethod where Scalar == Double {
 
 // MARK: - Composition combinators
 
-extension DerivativeMethod {
+public extension DerivativeMethod {
     /// Combinators that build new methods from existing ones.
-    public enum Compose {
+    enum Compose {
         /// Apply `method` to its own output `times` times.
         ///
         /// For `times = 2` and `method` of order `m`, the result approximates the
@@ -323,7 +325,7 @@ extension DerivativeMethod {
 
 // MARK: - Scalar == Double specialisations (Fornberg)
 
-extension DerivativeMethod where Scalar == Double {
+public extension DerivativeMethod where Scalar == Double {
     /// Custom central stencil with arbitrary `points` (odd) and `order`
     /// (1 ≤ order ≤ points − 1). Stencil weights are computed at construction
     /// time using **Fornberg's algorithm** (1988), which produces the optimal
@@ -336,7 +338,7 @@ extension DerivativeMethod where Scalar == Double {
     /// rational arithmetic that's painful to express generically over `ℝ` types
     /// without an `Int → Scalar` bridge. If you have a non-`Double` use case,
     /// reach out — generalising is a code change, not a math change.
-    public static func fornbergCentralStencil(
+    static func fornbergCentralStencil(
         points: Int,
         order: Int,
         step: StepCalculator<Double>
@@ -368,7 +370,7 @@ extension DerivativeMethod where Scalar == Double {
 ///
 /// Reference: Fornberg, B. (1988). *Generation of finite difference formulas on
 /// arbitrarily spaced grids*. Math. Comp. 51(184): 699–706.
-internal func fornbergWeights(
+func fornbergWeights(
     at z: Double,
     points: [Double],
     derivativeOrder m: Int

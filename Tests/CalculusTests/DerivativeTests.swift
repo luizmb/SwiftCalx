@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 @testable import Calculus
 import Foundation
 import MathOperators
@@ -43,10 +45,10 @@ class DerivativeTests: XCTestCase {
         }
 
         XCTAssertEqual(testScenarios.count, slopes.count)
-        zip(testScenarios, slopes).forEach { testScenario, slope in
-            if (testScenario.expectedSlope.isNaN || testScenario.expectedSlope.isInfinite)
-                && (slope.isNaN || slope.isInfinite) {
-                return
+        for (testScenario, slope) in zip(testScenarios, slopes) {
+            if testScenario.expectedSlope.isNaN || testScenario.expectedSlope.isInfinite,
+               slope.isNaN || slope.isInfinite {
+                continue
             }
             XCTAssertEqual(testScenario.expectedSlope, slope, accuracy: accuracy)
         }
@@ -74,7 +76,7 @@ class DerivativeTests: XCTestCase {
 
         XCTAssertEqual(testScenarios.count, slopes.count)
         zip(testScenarios, slopes).forEach { testScenario, slope in
-            if testScenario.expectedSlope.isNaN && slope.isNaN { return }
+            if testScenario.expectedSlope.isNaN, slope.isNaN { return }
             XCTAssertEqual(testScenario.expectedSlope, slope, accuracy: accuracy)
         }
     }
@@ -99,7 +101,7 @@ class DerivativeTests: XCTestCase {
         }
 
         XCTAssertEqual(testScenarios.count, results.count)
-        zip(testScenarios, results).forEach { testScenario, isDifferentiableAtPoint in
+        for (testScenario, isDifferentiableAtPoint) in zip(testScenarios, results) {
             XCTAssertEqual(testScenario.expectedIsDifferentiable, isDifferentiableAtPoint)
         }
     }

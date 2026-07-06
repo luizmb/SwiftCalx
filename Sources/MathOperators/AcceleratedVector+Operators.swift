@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import RealNumber
 #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
-import Accelerate
+    import Accelerate
 #endif
 
 // MARK: - Dot operator overloads for AcceleratedVector
+
 //
 // Extends the `⋅` operator family from `Matrix+Operators.swift` to cover
 // `AcceleratedVector` interop. Reads naturally as it would on paper:
@@ -29,17 +32,17 @@ public func ⋅ (scalar: Double, vector: AcceleratedVector) -> AcceleratedVector
 /// `zip + reduce` on non-Apple builds or `-D SWIFTCALX_NO_ACCELERATE`.
 public func ⋅ (lhs: AcceleratedVector, rhs: AcceleratedVector) -> Double {
     #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
-    let n = Int32(lhs.storage.count)
-    var result = 0.0
-    lhs.storage.withUnsafeBufferPointer { lBuf in
-        rhs.storage.withUnsafeBufferPointer { rBuf in
-            if let l = lBuf.baseAddress, let r = rBuf.baseAddress {
-                result = cblas_ddot(n, l, 1, r, 1)
+        let n = Int32(lhs.storage.count)
+        var result = 0.0
+        lhs.storage.withUnsafeBufferPointer { lBuf in
+            rhs.storage.withUnsafeBufferPointer { rBuf in
+                if let l = lBuf.baseAddress, let r = rBuf.baseAddress {
+                    result = cblas_ddot(n, l, 1, r, 1)
+                }
             }
         }
-    }
-    return result
+        return result
     #else
-    return zip(lhs.storage, rhs.storage).reduce(0.0) { $0 + $1.0 * $1.1 }
+        return zip(lhs.storage, rhs.storage).reduce(0.0) { $0 + $1.0 * $1.1 }
     #endif
 }

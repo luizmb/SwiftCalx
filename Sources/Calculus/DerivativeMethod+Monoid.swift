@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Math
 import RealNumber
 
-extension DerivativeMethod {
+public extension DerivativeMethod {
     /// Compose two methods left-to-right: apply `self` first, then `other` to
     /// the resulting slope function. Orders add.
     ///
@@ -10,7 +12,7 @@ extension DerivativeMethod {
     /// composed method's effective accuracy is typically lower than a direct
     /// higher-order method tuned for that order. Prefer
     /// ``CentralStencil/fivePoint(order:step:)`` (etc.) when a direct method exists.
-    public func then(_ other: DerivativeMethod<Scalar>) -> DerivativeMethod<Scalar> {
+    func then(_ other: DerivativeMethod<Scalar>) -> DerivativeMethod<Scalar> {
         DerivativeMethod(order: order + other.order) { f in
             other.deriving(self.deriving(f))
         }
@@ -18,6 +20,7 @@ extension DerivativeMethod {
 }
 
 // MARK: - Monoid (under left-to-right composition)
+
 //
 // Composition is the only canonical monoid on `DerivativeMethod` — there's no
 // competing notion of "combine" the way `Double` has both `+` and `*`. So

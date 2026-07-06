@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 @testable import Calculus
 import Foundation
 import XCTest
@@ -5,32 +7,35 @@ import XCTest
 class FnFibonacciTests: XCTestCase {
     func testFibonacci() {
         let sequence: [Double] = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]
-        sequence.enumerated().forEach { index, expected in
+        for (index, expected) in sequence.enumerated() {
             XCTAssertEqual(Fibonacci.quickMethod(Double(index)), expected, accuracy: 1e-10)
         }
     }
 
     func testSpeedQuickFibo() {
         measure {
-            (0...100).forEach { index in
+            for index in (0...100) {
                 _ = Fibonacci.quickMethod(Double(index))
             }
         }
     }
+
     func testSpeedBalancedFibo() {
         measure {
-            (0...100).forEach { index in
+            for index in (0...100) {
                 _ = Fibonacci.balancedMethod(Double(index))
             }
         }
     }
+
     func testSpeedPreciseFibo() {
         measure {
-            (0...100).forEach { index in
+            for index in (0...100) {
                 _ = Fibonacci.preciseMethod(Double(index))
             }
         }
     }
+
     func testCompareFiboAlgorithmPrecision() {
         zip(
             zip(

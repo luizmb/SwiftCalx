@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 
-extension ℝ {
-    public func error(from expected: Self) -> Self {
+public extension ℝ {
+    func error(from expected: Self) -> Self {
         abs(expected - self)
     }
 }

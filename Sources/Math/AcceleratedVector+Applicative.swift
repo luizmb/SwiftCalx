@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import RealNumber
 
-extension AcceleratedVector {
+public extension AcceleratedVector {
     /// Lift a binary `(Double, Double) -> Double` into an operation on
     /// `AcceleratedVector`s by Cartesian product. Mirrors `Array.liftA2` from FP's
     /// `CoreFP` (which uses `flatMap` + `map` for the non-determinism
@@ -11,7 +13,7 @@ extension AcceleratedVector {
     /// Note the Cartesian semantics: result length is `lhs.count * rhs.count`,
     /// not elementwise. For elementwise arithmetic prefer ``AcceleratedVector/+(_:_:)``
     /// and friends.
-    public static func liftA2(
+    static func liftA2(
         _ fn: @escaping @Sendable (Double, Double) -> Double
     ) -> @Sendable (AcceleratedVector, AcceleratedVector) -> AcceleratedVector {
         { lhs, rhs in
@@ -26,7 +28,7 @@ extension AcceleratedVector {
     /// `CoreFP`.
     ///
     ///     (<*>) :: [a -> b] -> [a] -> [b]
-    public static func apply(
+    static func apply(
         _ functions: [@Sendable (Double) -> Double],
         _ values: AcceleratedVector
     ) -> AcceleratedVector {
@@ -36,14 +38,14 @@ extension AcceleratedVector {
     /// Cartesian product, keeping right values. Mirrors `Array.seqRight`.
     ///
     ///     seqRight :: AcceleratedVector -> AcceleratedVector -> AcceleratedVector
-    public func seqRight(_ rhs: AcceleratedVector) -> AcceleratedVector {
+    func seqRight(_ rhs: AcceleratedVector) -> AcceleratedVector {
         AcceleratedVector(storage.flatMap { _ in rhs.storage })
     }
 
     /// Cartesian product, keeping left values. Mirrors `Array.seqLeft`.
     ///
     ///     seqLeft :: AcceleratedVector -> AcceleratedVector -> AcceleratedVector
-    public func seqLeft(_ rhs: AcceleratedVector) -> AcceleratedVector {
+    func seqLeft(_ rhs: AcceleratedVector) -> AcceleratedVector {
         AcceleratedVector(storage.flatMap { a in rhs.storage.map { _ in a } })
     }
 
@@ -53,7 +55,7 @@ extension AcceleratedVector {
     /// `Swift.zip` exposed in array form.
     ///
     /// For the all-combinations form, see ``cartesian(_:_:)``.
-    public static func zip(_ lhs: AcceleratedVector, _ rhs: AcceleratedVector) -> [(Double, Double)] {
+    static func zip(_ lhs: AcceleratedVector, _ rhs: AcceleratedVector) -> [(Double, Double)] {
         Array(Swift.zip(lhs.storage, rhs.storage))
     }
 }
