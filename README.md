@@ -77,7 +77,7 @@ The library targets **students, scientific Swift developers, and educators** —
 Swift Package Manager. In your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.4.0")
+.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.5.0")
 ```
 
 Then pick a product for each target that needs it:
