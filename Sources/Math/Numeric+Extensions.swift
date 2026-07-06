@@ -169,6 +169,6 @@ public extension Double {
     ///   - `x₀`: the value of `x` when `y` is at 50% (midpoint of the curve)
     /// - Returns: the value of `y` for the given `x` in this logistic function
     static func logistic(x: Double, L: Double, k: Double, x₀: Double) -> Double {
-        L / (1.0 + pow(M_E, -k * (x - x₀)))
+        L / (1.0 + exp(-k * (x - x₀)))
     }
 }
