@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 
 public enum Symbols {}
 
-extension Symbols {
-    public static let ℝ = "ℝ"
-    public static let Δ = "Δ"
-    public static let 𝓃 = "𝓃"
+public extension Symbols {
+    static let ℝ = "ℝ"
+    static let Δ = "Δ"
+    static let 𝓃 = "𝓃"
 }

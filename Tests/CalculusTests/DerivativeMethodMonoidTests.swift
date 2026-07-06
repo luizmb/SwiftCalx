@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Calculus
 import CoreFP
 import Math
@@ -5,7 +7,7 @@ import XCTest
 
 final class DerivativeMethodMonoidTests: XCTestCase {
     private let stencil = DerivativeMethod<Double>.CentralStencil.threePoint(order: 1, step: .adaptative)
-    private let f = Fn<Double> { x in x * x * x }  // f(x) = x³
+    private let f = Fn<Double> { x in x * x * x } // f(x) = x³
 
     // MARK: - Direct identity / then API
 

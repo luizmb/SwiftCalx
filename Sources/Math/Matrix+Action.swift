@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import RealNumber
 
-extension Matrix {
+public extension Matrix {
     /// Iteratively applies this matrix `count` times to `initial`, collecting every
     /// intermediate state.
     ///
@@ -27,7 +29,7 @@ extension Matrix {
     /// well-conditioned `M` and modest `n` the drift is invisible; for stiff
     /// systems (large `κ`) it can dominate. Compare against fresh `Mⁿ · initial`
     /// to spot when this matters.
-    public func actions(on initial: [Scalar], count: Int) -> [[Scalar]] {
+    func actions(on initial: [Scalar], count: Int) -> [[Scalar]] {
         guard count >= 0 else { return [initial] }
         var x = initial
         var result: [[Scalar]] = [initial]

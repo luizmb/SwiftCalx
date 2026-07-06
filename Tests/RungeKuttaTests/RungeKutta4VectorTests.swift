@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 @testable import RungeKutta
 import XCTest
@@ -41,7 +43,7 @@ final class RungeKutta4VectorTests: XCTestCase {
     /// Single radioactive compartment: `dy/dt = -λ·y`, exact `y(t) = e^{-λt}`.
     /// Same algorithm as scalar exponential decay, exercised through the vector API.
     func testSingleCompartmentDecay() {
-        let lambda: Double = Foundation.log(2) / 10  // half-life of 10 time units
+        let lambda: Double = Foundation.log(2) / 10 // half-life of 10 time units
         let derivative: (Double, [Double]) -> [Double] = { _, y in [-lambda * y[0]] }
         let trajectory = integrate(derivative: derivative, from: [1], to: 50, step: 0.05)
         for t in [0, 1, 5, 10, 20, 50] {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 @testable import RungeKutta
 import XCTest

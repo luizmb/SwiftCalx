@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 import Math
 import RealNumber
@@ -39,9 +41,10 @@ import RealNumber
 /// - Hairer, Nørsett & Wanner, *Solving Ordinary Differential Equations I:
 ///   Nonstiff Problems* (Springer, 2nd ed., 1993), §II.5.
 /// - https://en.wikipedia.org/wiki/Dormand–Prince_method
-public enum RungeKutta45 { }
+public enum RungeKutta45 {}
 
 // MARK: - Dormand–Prince coefficients
+
 //
 // Butcher tableau, with the embedded 4th-order weights below the line:
 //
@@ -52,10 +55,10 @@ public enum RungeKutta45 { }
 //
 // All coefficients are exact rationals from the Dormand–Prince 1980 paper.
 
-extension RungeKutta45 {
+fileprivate extension RungeKutta45 {
     /// Time offsets at which the seven stages are evaluated, relative to `t`.
     /// `c1 = 0` (the start of the step) is implicit and omitted.
-    fileprivate enum C {
+    enum C {
         static let c2 = 1.0 / 5.0
         static let c3 = 3.0 / 10.0
         static let c4 = 4.0 / 5.0
@@ -66,7 +69,7 @@ extension RungeKutta45 {
 
     /// Inter-stage weights — the `a[i][j]` from the Butcher tableau, naming the
     /// fields directly so the recurrence reads like the textbook.
-    fileprivate enum A {
+    enum A {
         static let a21 = 1.0 / 5.0
 
         static let a31 = 3.0 / 40.0
@@ -98,7 +101,7 @@ extension RungeKutta45 {
 
     /// 5th-order solution weights. Equal to `a7*` (FSAL).
     /// b2 = b7 = 0 — canonical-tableau zeroes, elided from code.
-    fileprivate enum B5 {
+    enum B5 {
         static let b1 = A.a71
         static let b3 = A.a73
         static let b4 = A.a74
@@ -108,7 +111,7 @@ extension RungeKutta45 {
 
     /// 4th-order embedded weights — used to estimate the local truncation error.
     /// b2 = 0 — canonical-tableau zero, elided from code.
-    fileprivate enum B4 {
+    enum B4 {
         static let b1 = 5_179.0 / 57_600.0
         static let b3 = 7_571.0 / 16_695.0
         static let b4 = 393.0 / 640.0
@@ -120,7 +123,7 @@ extension RungeKutta45 {
 
 // MARK: - Step
 
-extension RungeKutta45 {
+public extension RungeKutta45 {
     /// One Dormand–Prince step. Returns the accepted-or-not pair of estimates
     /// plus the error-weighted norm; callers (the trajectory driver) decide
     /// whether to accept and how to size the next step.
@@ -128,7 +131,7 @@ extension RungeKutta45 {
     /// Generic over any ``NormedVectorState`` whose scalar is `Double` — that
     /// covers `[Double]` (the typical multi-compartment shape) and `Double`
     /// itself (the scalar case).
-    public struct Step<State: NormedVectorState> where State.Scalar == Double {
+    struct Step<State: NormedVectorState> where State.Scalar == Double {
         /// 5th-order accurate estimate of `y(t + h)`.
         public let y5: State
         /// 4th-order embedded estimate of `y(t + h)`.
@@ -144,7 +147,7 @@ extension RungeKutta45 {
     /// initial slope `k1 = f(t, y)`. Returns the embedded pair + error norm
     /// without judging acceptability — see ``trajectory(from:derivative:startingAt:through:tolerance:initialStep:minStep:maxStep:maxIterations:)``
     /// for the adaptive driver that does the accept/reject + step-size logic.
-    public static func step<State: NormedVectorState>(
+    static func step<State: NormedVectorState>(
         from t: Double,
         y: State,
         k1: State,

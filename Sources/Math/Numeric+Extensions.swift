@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 
 // MARK: - Interpolation & Progress for Floating Points
-extension BinaryFloatingPoint {
+
+public extension BinaryFloatingPoint {
     /// Linear Interpolation between two floating-point numbers of same type
     /// (https://en.wikipedia.org/wiki/Linear_interpolation)
     /// Usage:
@@ -15,7 +18,7 @@ extension BinaryFloatingPoint {
     ///   - maximum: greater number
     ///   - percentage: point in interpolation where the result should be, from 0.0 to 1.0
     /// - Returns: the normalized number between maximum and minimum, given the percentage progress
-    public static func linearInterpolation(minimum: Self, maximum: Self, percentage: Self) -> Self {
+    static func linearInterpolation(minimum: Self, maximum: Self, percentage: Self) -> Self {
         (percentage * (maximum - minimum)) + minimum
     }
 
@@ -34,7 +37,7 @@ extension BinaryFloatingPoint {
     ///   - current: point in interpolation where the result should be, from minimum to maximum
     ///   - constrainedToValidPercentage: constrains the result between 0% and 100%
     /// - Returns: the percentage representing the progress that `current` value travelled from `minimum` to `maximum`
-    public static func linearProgress(minimum: Self, maximum: Self, current: Self, constrainedToValidPercentage: Bool = true) -> Self {
+    static func linearProgress(minimum: Self, maximum: Self, current: Self, constrainedToValidPercentage: Bool = true) -> Self {
         assert(maximum > minimum, "On function linearProgress, maximum value \(maximum) should be greater than minimum value \(minimum)")
         let value = constrainedToValidPercentage
             ? current.clamped(to: minimum...maximum)
@@ -57,28 +60,32 @@ extension BinaryFloatingPoint {
     ///   - upperBound: Absolute upper bound of the interpolation bracket.
     /// - Returns: The absolute value returned by using the calculated percentage as `current` for
     ///     `linearInterpolation`.
-    public static func interpolateProgress(
+    static func interpolateProgress(
         minimum: Self,
         maximum: Self,
         current: Self,
         constrainedToValidPercentage: Bool = true,
         ontoBracketWith lowerBound: Self,
-        upperBound: Self) -> Self {
+        upperBound: Self
+    ) -> Self {
         let percentage = linearProgress(
             minimum: minimum,
             maximum: maximum,
             current: current,
-            constrainedToValidPercentage: constrainedToValidPercentage)
+            constrainedToValidPercentage: constrainedToValidPercentage
+        )
         let interpolation = linearInterpolation(
             minimum: lowerBound,
             maximum: upperBound,
-            percentage: percentage)
+            percentage: percentage
+        )
         return interpolation
     }
 }
 
 // MARK: - Interpolation & Progress for Integers
-extension BinaryInteger {
+
+public extension BinaryInteger {
     /// Linear Interpolation between two integer numbers of same type
     /// (https://en.wikipedia.org/wiki/Linear_interpolation)
     /// Usage:
@@ -91,7 +98,7 @@ extension BinaryInteger {
     ///   - maximum: greater number
     ///   - percentage: point in interpolation where the result should be, from 0.0 to 1.0
     /// - Returns: the normalized number between maximum and minimum, given the percentage progress
-    public static func linearInterpolation(minimum: Self, maximum: Self, percentage: Double) -> Double {
+    static func linearInterpolation(minimum: Self, maximum: Self, percentage: Double) -> Double {
         Double.linearInterpolation(minimum: Double(minimum),
                                    maximum: Double(maximum),
                                    percentage: percentage)
@@ -112,7 +119,7 @@ extension BinaryInteger {
     ///   - current: point in interpolation where the result should be, from minimum to maximum
     ///   - constrainedToValidPercentage: constrains the result between 0% and 100%
     /// - Returns: the percentage representing the progress that `current` value travelled from `minimum` to `maximum`
-    public static func linearProgress(minimum: Self, maximum: Self, current: Self, constrainedToValidPercentage: Bool = true) -> Double {
+    static func linearProgress(minimum: Self, maximum: Self, current: Self, constrainedToValidPercentage: Bool = true) -> Double {
         Double.linearProgress(minimum: Double(minimum),
                               maximum: Double(maximum),
                               current: Double(current),
@@ -133,13 +140,14 @@ extension BinaryInteger {
     ///   - upperBound: Absolute upper bound of the interpolation bracket.
     /// - Returns: The absolute value returned by using the calculated percentage as `current` for
     ///     `linearInterpolation`.
-    public static func interpolateProgress(
+    static func interpolateProgress(
         minimum: Self,
         maximum: Self,
         current: Self,
         constrainedToValidPercentage: Bool = true,
         ontoBracketWith lowerBound: Double,
-        upperBound: Double) -> Double {
+        upperBound: Double
+    ) -> Double {
         Double.interpolateProgress(minimum: Double(minimum),
                                    maximum: Double(maximum),
                                    current: Double(current),
@@ -149,7 +157,7 @@ extension BinaryInteger {
     }
 }
 
-extension Double {
+public extension Double {
     /// Logistic Function
     /// (https://en.wikipedia.org/wiki/Logistic_function)
     /// It's a sigmoid curve (S shaped) with the equation
@@ -160,7 +168,7 @@ extension Double {
     ///   - `k`: the logistic growth rate (steepness of the curve)
     ///   - `x₀`: the value of `x` when `y` is at 50% (midpoint of the curve)
     /// - Returns: the value of `y` for the given `x` in this logistic function
-    public static func logistic(x: Double, L: Double, k: Double, x₀: Double) -> Double {
-        L / (1.0 + pow(M_E, -k * (x - x₀)))
+    static func logistic(x: Double, L: Double, k: Double, x₀: Double) -> Double {
+        L / (1.0 + exp(-k * (x - x₀)))
     }
 }

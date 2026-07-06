@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import XCTest
 
@@ -69,18 +71,18 @@ final class MatrixBLASTests: XCTestCase {
         let C = A * B
         XCTAssertEqual(C.rows, 2)
         XCTAssertEqual(C.columns, 2)
-        XCTAssertEqual(C[0, 0], 58, accuracy: tolerance)   // 1·7+2·9+3·11
-        XCTAssertEqual(C[0, 1], 64, accuracy: tolerance)   // 1·8+2·10+3·12
-        XCTAssertEqual(C[1, 0], 139, accuracy: tolerance)  // 4·7+5·9+6·11
-        XCTAssertEqual(C[1, 1], 154, accuracy: tolerance)  // 4·8+5·10+6·12
+        XCTAssertEqual(C[0, 0], 58, accuracy: tolerance) // 1·7+2·9+3·11
+        XCTAssertEqual(C[0, 1], 64, accuracy: tolerance) // 1·8+2·10+3·12
+        XCTAssertEqual(C[1, 0], 139, accuracy: tolerance) // 4·7+5·9+6·11
+        XCTAssertEqual(C[1, 1], 154, accuracy: tolerance) // 4·8+5·10+6·12
     }
 
     func testMatMatFloatMatchesHandComputed() {
         let A = Matrix<Float>(rows: 2, columns: 2, storage: [1, 2, 3, 4])
         let B = Matrix<Float>(rows: 2, columns: 2, storage: [5, 6, 7, 8])
         let C = A * B
-        XCTAssertEqual(C[0, 0], 19, accuracy: 1e-5)  // 1·5+2·7
-        XCTAssertEqual(C[1, 1], 50, accuracy: 1e-5)  // 3·6+4·8
+        XCTAssertEqual(C[0, 0], 19, accuracy: 1e-5) // 1·5+2·7
+        XCTAssertEqual(C[1, 1], 50, accuracy: 1e-5) // 3·6+4·8
     }
 
     func testMatMatOnIdentityReturnsOperand() {

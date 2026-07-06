@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 import Math
@@ -65,14 +67,14 @@ public struct DerivativeFunction<Scalar: ℝ>: Sendable {
     }
 }
 
-extension Endo where A: ℝ {
+public extension Endo where A: ℝ {
     /// Wrap this function as the underlying of a ``DerivativeFunction`` driven by
     /// `method`. Entry point into the calculus pipeline.
-    public func differentiate(method: DerivativeMethod<A>) -> DerivativeFunction<A> {
+    func differentiate(method: DerivativeMethod<A>) -> DerivativeFunction<A> {
         DerivativeFunction(underlyingFunction: self, method: method)
     }
 
-    public func point(at x: A) -> BidimensionalPoint<A>? {
+    func point(at x: A) -> BidimensionalPoint<A>? {
         let y = self(x)
         guard !x.isNaN, !y.isNaN else { return nil }
         return BidimensionalPoint(x: x, y: y)
@@ -81,7 +83,7 @@ extension Endo where A: ℝ {
     /// Returns the perpendicular-slope function: at every point, the negative
     /// reciprocal of `self(x)`. If `self` is a tangent slope, this is the slope
     /// of the line perpendicular to it.
-    public func perpendicularSlope() -> Self {
+    func perpendicularSlope() -> Self {
         Self { x in -1 / self(x) }
     }
 }

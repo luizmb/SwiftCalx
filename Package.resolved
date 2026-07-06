@@ -1,13 +1,13 @@
 {
-  "originHash" : "c40c0b2ea7e41223650c5634fe8a2597a69462bfbfa350d6db111f2e201fa6d2",
+  "originHash" : "99cf52d8d7c40d31771a113b6f9c2d6bf809b7c883df88dc16cd3cc4603cee26",
   "pins" : [
     {
       "identity" : "fp",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/luizmb/FP.git",
       "state" : {
-        "revision" : "c1b32932021b444d8b21ca873c80bfcd4c6b8ecb",
-        "version" : "1.13.0"
+        "revision" : "d274138e9897e8daae26d4ca5a7e039b49c70ca2",
+        "version" : "1.14.0"
       }
     },
     {

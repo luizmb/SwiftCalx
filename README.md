@@ -1,5 +1,12 @@
 # SwiftCalx
 
+[![CI](https://github.com/luizmb/SwiftCalx/actions/workflows/ci.yml/badge.svg)](https://github.com/luizmb/SwiftCalx/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-online-blue)](https://ios.lu/SwiftCalx)
+[![Swift 6.3+](https://img.shields.io/badge/swift-6.3%2B-orange)](https://swift.org)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+
+**[→ Full API Documentation](https://ios.lu/SwiftCalx)** · [Installation](#installation)
+
 A Swift numerical-methods library: ODE solvers, numerical derivatives, matrix arithmetic, and the small algebraic pieces (real numbers, vector states, weighted averages) those rest on. Built on top of [luizmb/FP](https://github.com/luizmb/FP) for composition primitives.
 
 The name is from Latin *calx* — a small stone used for reckoning in ancient Rome. *Calx* is the etymological root of *calculate*, *calculation*, and *calculus*. Romans literally counted with pebbles; this library does the same in floating-point.
@@ -70,7 +77,7 @@ The library targets **students, scientific Swift developers, and educators** —
 Swift Package Manager. In your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.2.0")
+.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.4.0")
 ```
 
 Then pick a product for each target that needs it:

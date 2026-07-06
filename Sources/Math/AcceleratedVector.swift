@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import RealNumber
 
@@ -62,7 +64,7 @@ public struct AcceleratedVector: Sendable {
 
     /// Convenience initialiser for variadic Double values: `AcceleratedVector(1.0, 2.0, 3.0)`.
     public init(_ elements: Double...) {
-        self.storage = elements
+        storage = elements
     }
 
     public var count: Int { storage.count }
@@ -75,6 +77,7 @@ extension AcceleratedVector: Equatable {}
 extension AcceleratedVector: Hashable {}
 
 // MARK: - Monoid (under concatenation, mirrors `Array`'s direct conformance)
+
 //
 // Distinct from elementwise addition (`+`, which lives on the `VectorState`
 // conformance). `combine` joins two vectors end-to-end; `identity` is the
@@ -119,18 +122,18 @@ extension AcceleratedVector: RandomAccessCollection {
 
 // MARK: - Type-preserving map
 
-extension AcceleratedVector {
+public extension AcceleratedVector {
     /// Element-wise transformation that stays in `AcceleratedVector`-land. Use when you
     /// want a `AcceleratedVector` back; the inherited Collection `map` returns `[T]`
     /// (and naturally `[Double]` when `T == Double`).
-    public func mapAccelerated(_ transform: (Double) -> Double) -> AcceleratedVector {
+    func mapAccelerated(_ transform: (Double) -> Double) -> AcceleratedVector {
         AcceleratedVector(storage.map(transform))
     }
 }
 
 // MARK: - Array bridge
 
-extension Array where Element == Double {
+public extension [Double] {
     /// Wrap `self` as a `AcceleratedVector` without copying. Same COW buffer.
-    public var asAcceleratedVector: AcceleratedVector { AcceleratedVector(self) }
+    var asAcceleratedVector: AcceleratedVector { AcceleratedVector(self) }
 }

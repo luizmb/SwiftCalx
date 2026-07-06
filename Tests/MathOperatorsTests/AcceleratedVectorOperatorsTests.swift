@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import MathOperators
 import XCTest
@@ -22,7 +24,7 @@ final class VectorOperatorsTests: XCTestCase {
     func testVectorDotProduct() {
         let u = AcceleratedVector([1.0, 2.0, 3.0])
         let v = AcceleratedVector([4.0, 5.0, 6.0])
-        XCTAssertEqual(u ⋅ v, 32.0, accuracy: tolerance)   // 1·4 + 2·5 + 3·6
+        XCTAssertEqual(u ⋅ v, 32.0, accuracy: tolerance) // 1·4 + 2·5 + 3·6
     }
 
     func testDotProductWithOrthogonalVectorsIsZero() {

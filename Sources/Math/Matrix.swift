@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import RealNumber
 
 /// A row-major rectangular matrix over an ``ℝ`` scalar.

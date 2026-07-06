@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 
 extension Float: ℝ {
@@ -6,6 +8,8 @@ extension Float: ℝ {
     }
 
     public static func eⁿ(_ n: Self) -> Self {
-        exp(n)
+        // Round-trip through Double: Android's NDK math.h exposes only exp(Double),
+        // not a Float overload. Double(exp) is identical and portable everywhere.
+        Float(exp(Double(n)))
     }
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 import RealNumber
 
@@ -37,10 +39,10 @@ extension Decimal: NormedVectorState {
 }
 
 #if !((os(macOS) || targetEnvironment(macCatalyst)) && arch(x86_64))
-@available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
-extension Float16: NormedVectorState { public var infinityNorm: Float16 { magnitude } }
+    @available(macOS 11.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *)
+    extension Float16: NormedVectorState { public var infinityNorm: Float16 { magnitude } }
 #endif
 
 #if (arch(i386) || arch(x86_64)) && !os(Windows) && !os(Android)
-extension Float80: NormedVectorState { public var infinityNorm: Float80 { magnitude } }
+    extension Float80: NormedVectorState { public var infinityNorm: Float80 { magnitude } }
 #endif

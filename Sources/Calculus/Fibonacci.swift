@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import Foundation
 import RealNumber
@@ -27,6 +29,7 @@ extension Fibonacci: Sequence {
         fileprivate init(method: Method) {
             self.method = method
         }
+
         public func next() -> Double? {
             let element = switch method {
             case .balanced: Fibonacci.balancedMethod(idx)
@@ -39,19 +42,19 @@ extension Fibonacci: Sequence {
     }
 }
 
-extension Fibonacci {
-    public static var quickMethod: Fn<Double> {
+public extension Fibonacci {
+    static var quickMethod: Fn<Double> {
         Fn { x in
             let squareRootOfFive = sqrt(5)
             let onePlusSquareRootOfFive = 1 + squareRootOfFive
             return (1 / squareRootOfFive) * (
                 pow(onePlusSquareRootOfFive / 2, x)
-                - pow(2 / onePlusSquareRootOfFive, x) * cos(x * Double.pi)
+                    - pow(2 / onePlusSquareRootOfFive, x) * cos(x * Double.pi)
             )
         }
     }
 
-    public static var balancedMethod: Fn<Double> {
+    static var balancedMethod: Fn<Double> {
         Fn { x in
             guard x > 1 else { return x }
             let goldenRatio = (1.0 + pow(5.0, 0.5)) / 2.0
@@ -66,7 +69,7 @@ extension Fibonacci {
         }
     }
 
-    public static var preciseMethod: Fn<Double> {
+    static var preciseMethod: Fn<Double> {
         Fn { x in
             guard x > 1 else { return x }
             var current: Double = 1

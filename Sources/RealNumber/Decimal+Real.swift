@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Foundation
 
 extension Decimal: ℝ {
@@ -18,12 +20,12 @@ extension Decimal: ℝ {
     public static let epsilon: Decimal = 1e-6
 }
 
-extension Decimal {
-    public func squareRoot() -> Self {
+public extension Decimal {
+    func squareRoot() -> Self {
         nRoot(degree: 2)
     }
 
-    public func raisedToThePower(of exponent: Decimal) -> Decimal {
+    func raisedToThePower(of exponent: Decimal) -> Decimal {
         let result: Double = pow(
             NSDecimalNumber(decimal: self).doubleValue,
             NSDecimalNumber(decimal: exponent).doubleValue
@@ -31,11 +33,11 @@ extension Decimal {
         return NSDecimalNumber(value: result).decimalValue
     }
 
-    public static var notANumber: Decimal {
+    static var notANumber: Decimal {
         nan
     }
 
-    public func isMultiple(of divisor: Self, tolerance: Self) -> Bool {
+    func isMultiple(of divisor: Self, tolerance: Self) -> Bool {
         let divisor = divisor == 0 ? divisor + tolerance / 2 : divisor
         guard divisor != 0 else { return false }
         let selfAsDouble = NSDecimalNumber(decimal: self).doubleValue
@@ -46,7 +48,7 @@ extension Decimal {
         return rangeWeConsiderEqual.contains(NSDecimalNumber(value: rem).decimalValue)
     }
 
-    public static func eⁿ(_ n: Self) -> Self {
+    static func eⁿ(_ n: Self) -> Self {
         NSDecimalNumber(
             value: exp(
                 Double(

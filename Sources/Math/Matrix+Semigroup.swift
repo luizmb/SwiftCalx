@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import CoreFP
 import RealNumber
 
-extension Matrix {
+public extension Matrix {
     /// `Matrix` under elementwise addition as a **semigroup** (not a monoid).
     ///
     /// Naming matches FP's ``NumericMonoid/Sum`` — `Sum` is what we'd reach for
@@ -18,7 +20,7 @@ extension Matrix {
     ///
     /// All operands in a fold must share the same shape — `combine` calls the
     /// shape-checked elementwise `+` underneath.
-    public struct Sum: Semigroup, RawRepresentable {
+    struct Sum: Semigroup, RawRepresentable {
         public let rawValue: Matrix<Scalar>
 
         public init(_ rawValue: Matrix<Scalar>) {
@@ -46,7 +48,7 @@ extension Matrix {
     /// starting vector `n` times), see ``Matrix/actions(on:count:)`` — it
     /// avoids the O(n³) per step cost of multiplying matrix powers and just
     /// does O(n²) per step mat-vec.
-    public struct Product: Semigroup, RawRepresentable {
+    struct Product: Semigroup, RawRepresentable {
         public let rawValue: Matrix<Scalar>
 
         public init(_ rawValue: Matrix<Scalar>) {

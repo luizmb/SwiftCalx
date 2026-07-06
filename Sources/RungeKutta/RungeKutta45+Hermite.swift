@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 
-extension RungeKutta45 {
+public extension RungeKutta45 {
     /// One accepted Dormand–Prince step, with the slopes at both endpoints kept.
     ///
     /// Those slopes are what makes 4th-order cubic-Hermite interpolation between
@@ -13,8 +15,8 @@ extension RungeKutta45 {
     /// keeps a list of these segments while integrating; afterwards, each
     /// requested output time finds its bracketing segment by bisection and
     /// evaluates the cubic-Hermite polynomial.
-    public struct Segment<State: NormedVectorState>: Sendable
-        where State.Scalar == Double, State: Sendable {
+    struct Segment<State: NormedVectorState>: Sendable
+    where State.Scalar == Double, State: Sendable {
         public let startTime: Double
         public let endTime: Double
         public let startState: State
@@ -71,7 +73,7 @@ extension RungeKutta45 {
     /// - Hairer, Nørsett, Wanner. *Solving Ordinary Differential Equations I:
     ///   Nonstiff Problems*, 2nd ed., §II.6.
     /// - https://en.wikipedia.org/wiki/Cubic_Hermite_spline
-    public static func cubicHermite<State: NormedVectorState>(
+    static func cubicHermite<State: NormedVectorState>(
         at t: Double,
         on segment: Segment<State>
     ) -> State where State.Scalar == Double, State: Sendable {

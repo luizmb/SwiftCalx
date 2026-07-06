@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import RealNumber
 
-extension AcceleratedVector {
+public extension AcceleratedVector {
     /// Pure, non-throwing element transformation returning `[T]`. Shadows
     /// `Sequence.map`'s `rethrows` form so the `AcceleratedVector` surface
     /// is closed under purity — call sites can't smuggle in `throws` closures
     /// (use `Result` / `DeferredTask` for error handling).
     ///
     ///     map :: AcceleratedVector -> (Double -> b) -> [b]
-    public func map<T>(_ transform: @Sendable (Double) -> T) -> [T] {
+    func map<T>(_ transform: @Sendable (Double) -> T) -> [T] {
         storage.map(transform)
     }
 
@@ -15,7 +17,7 @@ extension AcceleratedVector {
     /// `CoreFP`.
     ///
     ///     fmap :: (a -> b) -> f a -> f b
-    public static func fmap<A1>(
+    static func fmap<A1>(
         _ fn: @escaping @Sendable (Double) -> A1
     ) -> @Sendable (AcceleratedVector) -> [A1] {
         { vector in vector.storage.map(fn) }
@@ -24,7 +26,7 @@ extension AcceleratedVector {
     /// Type-preserving curried `fmap` for the common `(Double) -> Double`
     /// case — keeps the result inside `AcceleratedVector`-land so subsequent
     /// `+` / `*` stay on the vDSP path.
-    public static func fmap(
+    static func fmap(
         _ fn: @escaping @Sendable (Double) -> Double
     ) -> @Sendable (AcceleratedVector) -> AcceleratedVector {
         { vector in vector.mapAccelerated(fn) }

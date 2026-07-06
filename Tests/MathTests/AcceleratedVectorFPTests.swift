@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import Math
 import XCTest
 
@@ -67,6 +69,7 @@ final class VectorFPTests: XCTestCase {
     }
 
     // MARK: - Semigroup / Monoid (regression — `[Double] + [Double]` is
+
     // elementwise due to `Array: VectorState`, so `combine` must use
     // explicit concatenation, not `+`).
 
