@@ -2,7 +2,7 @@
 
 | Package | Version | License | Purpose |
 |---------|---------|---------|---------|
-| [FP](https://github.com/luizmb/FP) | ≥1.13.0 | Apache 2.0 | Functional programming utilities |
+| [FP](https://github.com/luizmb/FP) | ≥1.14.0 | Apache 2.0 | Functional programming utilities |
 | [swift-docc-plugin](https://github.com/swiftlang/swift-docc-plugin) | ≥1.4.0 | Apache 2.0 | Documentation generation |
 
 All licenses are Apache 2.0 compatible.
