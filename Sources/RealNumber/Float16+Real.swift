@@ -10,7 +10,8 @@ import Foundation
         }
 
         public static func eⁿ(_ n: Self) -> Self {
-            Float16(exp(Float(n)))
+            // Round-trip through Double (Android's NDK exposes only exp(Double)).
+            Float16(exp(Double(n)))
         }
     }
 #endif
