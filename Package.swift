@@ -48,7 +48,7 @@ let package = Package(
         .library(name: "SwiftCalx", targets: ["SwiftCalx"])
     ],
     dependencies: [
-        .package(url: "https://github.com/luizmb/FP.git", from: "1.14.0"),
+        .package(url: "https://github.com/luizmb/FP.git", from: "2.0.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.0")
     ],
     targets: customOperator + calculus + [
