@@ -7,7 +7,7 @@ Install SwiftCalx, pick the products you need, and solve your first ODE.
 Add the package to your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.5.1")
+.package(url: "https://github.com/luizmb/SwiftCalx.git", from: "0.6.0")
 ```
 
 Then add the products you need to your target. Each capability is a separate product so you only
