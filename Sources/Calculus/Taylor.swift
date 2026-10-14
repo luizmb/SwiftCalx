@@ -51,11 +51,16 @@ public enum Taylor {
         tolerance: Double = 1e-10,
         maxIterations: Int = 10_000
     ) -> Matrix<Double> {
-        let identity = Matrix<Double>.identity(size: A.rows)
-        var sum = identity
-        var term = identity
+        // `term` and `next` swap buffers each round, and `sum` is updated in place, so after
+        // the first rounds the series allocates nothing: `next = term · A`, then scaled by
+        // `1/r` in place (the same `(1/r) · (term · A)`, entry for entry).
+        var sum = Matrix<Double>.identity(size: A.rows)
+        var term = Matrix<Double>.identity(size: A.rows)
+        var next = Matrix<Double>(rows: 0, columns: 0, storage: [])
         for r in 1 ... maxIterations {
-            term = (1 / Double(r)) * (term * A)
+            Matrix.multiply(term, A, into: &next)
+            next *= 1 / Double(r)
+            swap(&term, &next)
             sum += term
             if converged(term: term, sum: sum, tolerance: tolerance) { return sum }
         }

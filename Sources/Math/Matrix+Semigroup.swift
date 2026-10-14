@@ -23,6 +23,7 @@ public extension Matrix {
     struct Sum: Semigroup, RawRepresentable {
         public let rawValue: Matrix<Scalar>
 
+        @inlinable
         public init(_ rawValue: Matrix<Scalar>) {
             self.rawValue = rawValue
         }
@@ -31,6 +32,7 @@ public extension Matrix {
             self.init(rawValue)
         }
 
+        @inlinable
         public static func combine(_ lhs: Sum, _ rhs: Sum) -> Sum {
             Sum(lhs.rawValue + rhs.rawValue)
         }
@@ -51,6 +53,7 @@ public extension Matrix {
     struct Product: Semigroup, RawRepresentable {
         public let rawValue: Matrix<Scalar>
 
+        @inlinable
         public init(_ rawValue: Matrix<Scalar>) {
             self.rawValue = rawValue
         }
@@ -59,6 +62,7 @@ public extension Matrix {
             self.init(rawValue)
         }
 
+        @inlinable
         public static func combine(_ lhs: Product, _ rhs: Product) -> Product {
             Product(lhs.rawValue * rhs.rawValue)
         }

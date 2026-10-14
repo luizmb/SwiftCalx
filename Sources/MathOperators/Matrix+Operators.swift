@@ -13,16 +13,19 @@ infix operator ⋅: MultiplicationPrecedence
 
 /// Matrix–matrix multiplication. Equivalent to `lhs * rhs`. See
 /// ``Math/Matrix/*(_:_:)-(Matrix,Matrix)``.
+@inlinable
 public func ⋅ <Scalar: ℝ>(lhs: Matrix<Scalar>, rhs: Matrix<Scalar>) -> Matrix<Scalar> {
     lhs * rhs
 }
 
 /// Scalar–matrix multiplication. Equivalent to `scalar * matrix`.
+@inlinable
 public func ⋅ <Scalar: ℝ>(scalar: Scalar, matrix: Matrix<Scalar>) -> Matrix<Scalar> {
     scalar * matrix
 }
 
 /// Matrix–vector application. Equivalent to `matrix.apply(to: vector)`.
+@inlinable
 public func ⋅ <Scalar: ℝ>(matrix: Matrix<Scalar>, vector: [Scalar]) -> [Scalar] {
     matrix.apply(to: vector)
 }

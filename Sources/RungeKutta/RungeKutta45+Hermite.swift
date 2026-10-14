@@ -26,6 +26,7 @@ public extension RungeKutta45 {
 
         public var stepSize: Double { endTime - startTime }
 
+        @inlinable
         public init(
             startTime: Double,
             endTime: Double,
@@ -73,6 +74,7 @@ public extension RungeKutta45 {
     /// - Hairer, Nørsett, Wanner. *Solving Ordinary Differential Equations I:
     ///   Nonstiff Problems*, 2nd ed., §II.6.
     /// - https://en.wikipedia.org/wiki/Cubic_Hermite_spline
+    @inlinable
     static func cubicHermite<State: NormedVectorState>(
         at t: Double,
         on segment: Segment<State>
@@ -87,10 +89,11 @@ public extension RungeKutta45 {
         let h01 = -2 * theta3 + 3 * theta2
         let h11 = theta3 - theta2
 
-        let term0 = h00 * segment.startState
-        let term1 = h01 * segment.endState
-        let term2 = (h10 * h) * segment.startSlope
-        let term3 = (h11 * h) * segment.endSlope
-        return term0 + term1 + term2 + term3
+        // `h00·y₀ + h01·y₁ + (h10·h)·m₀ + (h11·h)·m₁`, summed left to right into one state.
+        var result = h00 * segment.startState
+        result.add(segment.endState, scaledBy: h01)
+        result.add(segment.startSlope, scaledBy: h10 * h)
+        result.add(segment.endSlope, scaledBy: h11 * h)
+        return result
     }
 }

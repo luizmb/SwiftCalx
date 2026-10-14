@@ -29,6 +29,7 @@ public extension Matrix {
     /// well-conditioned `M` and modest `n` the drift is invisible; for stiff
     /// systems (large `κ`) it can dominate. Compare against fresh `Mⁿ · initial`
     /// to spot when this matters.
+    @inlinable
     func actions(on initial: [Scalar], count: Int) -> [[Scalar]] {
         guard count >= 0 else { return [initial] }
         var x = initial

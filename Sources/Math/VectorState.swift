@@ -19,17 +19,39 @@ public protocol VectorState: Sendable {
     associatedtype Scalar: ℝ
     static func + (lhs: Self, rhs: Self) -> Self
     static func * (scalar: Scalar, state: Self) -> Self
+
+    /// `self = self + scalar * other`, the step every RK stage repeats. Same result as the
+    /// two operators; conformers that own a buffer (`Array`) write into it instead of
+    /// building two new states. The default implementation uses the operators.
+    mutating func add(_ other: Self, scaledBy scalar: Scalar)
+}
+
+public extension VectorState {
+    @inlinable
+    mutating func add(_ other: Self, scaledBy scalar: Scalar) {
+        // `scalar * other + self`: IEEE addition commutes, so this is bit-for-bit `self + …`.
+        self = scalar * other + self
+    }
 }
 
 extension Array: VectorState where Element: ℝ {
     public typealias Scalar = Element
 
+    @inlinable
     public static func + (lhs: [Element], rhs: [Element]) -> [Element] {
-        Swift.zip(lhs, rhs).map(+)
+        lhs.elementwise(rhs, +)
     }
 
+    @inlinable
     public static func * (scalar: Element, state: [Element]) -> [Element] {
-        state.map { scalar * $0 }
+        state.scaled(by: scalar)
+    }
+
+    /// In place: `self[i] = self[i] + scalar * other[i]` (no allocation unless the buffer is
+    /// shared). Like `+`, only the first `min(count, other.count)` elements take part.
+    @inlinable
+    public mutating func add(_ other: [Element], scaledBy scalar: Element) {
+        formElementwise(other) { lhs, rhs in lhs + scalar * rhs }
     }
 }
 

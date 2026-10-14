@@ -36,6 +36,7 @@ extension RungeKutta45 {
     ///   - maxStep: largest step the integrator will take. Defaults to the
     ///     full span — let RK45 take big strides when the dynamics allow.
     ///   - maxIterations: safety bound on total accepted + rejected steps.
+    @inlinable
     public static func trajectory<State: NormedVectorState>(
         at outputTimes: [Double],
         from initialState: State,
@@ -70,6 +71,7 @@ extension RungeKutta45 {
     /// accepted segment with both endpoint slopes attached. Exposed publicly
     /// because some callers (e.g. diagnostic tooling) want the integrator's
     /// own time grid, not interpolated values.
+    @inlinable
     public static func denseSegments<State: NormedVectorState>(
         from initialState: State,
         derivative: @escaping @Sendable (Double, State) -> State,
@@ -134,7 +136,8 @@ extension RungeKutta45 {
     /// `endState` if `t` falls past every segment.
     ///
     /// Bisection finds the bracketing segment in `O(log n)` per query.
-    private static func interpolate<State: NormedVectorState>(
+    @inlinable
+    static func interpolate<State: NormedVectorState>(
         at t: Double,
         segments: [Segment<State>],
         initialState: State
@@ -168,7 +171,8 @@ extension RungeKutta45 {
     /// The `0.9` safety factor keeps the next attempt comfortably below the
     /// tolerance threshold; the `^(1/5)` exponent matches the 5th-order
     /// accuracy of the method (a step `h/2` reduces error by `(1/2)^5`).
-    private static func stepSizeFactor(errorNorm: Double, tolerance: Double) -> Double {
+    @inlinable
+    static func stepSizeFactor(errorNorm: Double, tolerance: Double) -> Double {
         guard errorNorm > 0 else { return 5.0 }
         let raw = 0.9 * pow(tolerance / errorNorm, 0.2)
         return min(5.0, max(0.1, raw))

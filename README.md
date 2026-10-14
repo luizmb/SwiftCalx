@@ -24,6 +24,7 @@ The name is from Latin *calx* — a small stone used for reckoning in ancient Ro
   - [AcceleratedVector](#acceleratedvector)
 - [Matrices](#matrices)
   - [Operations](#operations)
+  - [Matrix optics — editing entries in place](#matrix-optics--editing-entries-in-place)
   - [Iterated action — applying a matrix many times](#iterated-action--applying-a-matrix-many-times)
   - [Matrix.Sum and Matrix.Product — folding semigroup-style](#matrixsum-and-matrixproduct--folding-semigroup-style)
   - [Hardware-accelerated mat-vec and mat-mat](#hardware-accelerated-mat-vec-and-mat-mat)
@@ -254,7 +255,9 @@ v.filter { $0 > 1 }         // [Double] — Array semantics for non-type-preserv
 v.mapAccelerated { $0 * 2 } // AcceleratedVector — preserves the type for (Double) -> Double
 ```
 
-**Why a wrapper around `[Double]`?** Swift selects the `VectorState` protocol witness for `+` and `*` at the conformance site. `Array<Element>` conforms when `Element: ℝ` — generic over Element, so the witness uses the scalar `zip(...).map(+)` implementation. There's no way to "specialise" that witness for `Element == Double` without violating the protocol rules (multiple conformances, name-clash with the existing `+`). `AcceleratedVector` sidesteps the problem by being its own concrete type whose witness for `+` IS the vDSP path. Generic solver code dispatches naturally through the witness — no specialisation overloads on RK45 / RK4, no runtime type checks, no `.+` operator.
+**Why a wrapper around `[Double]`?** Swift selects the `VectorState` protocol witness for `+` and `*` at the conformance site. `Array<Element>` conforms when `Element: ℝ` — generic over Element, so its witness is the portable buffer loop, not vDSP. There's no way to "specialise" that witness for `Element == Double` without violating the protocol rules (multiple conformances, name-clash with the existing `+`). `AcceleratedVector` sidesteps the problem by being its own concrete type whose witness for `+` IS the vDSP path. Generic solver code dispatches naturally through the witness — no specialisation overloads on RK45 / RK4, no runtime type checks, no `.+` operator.
+
+Since 0.7.0 the gap is small: the solvers are `@inlinable`, so they're specialised for `[Double]` in your module, and both types build each RK stage in place (`add(_:scaledBy:)`). Measured on RK45 with a 16-compartment state, `[Double]` and `AcceleratedVector` are within 10% of each other.
 
 **Why not generic `AcceleratedVector<T: ℝ>`?** The same dispatch problem. A generic version would have to declare its `VectorState` conformance for any `T: ℝ`, and the witness body couldn't call `vDSP_vaddD` because it wouldn't know `T == Double`. The whole reason for AcceleratedVector existing is that it's *concrete*. For `Float` (which also has vDSP / cblas support), the right shape is a sibling concrete type — `AcceleratedFloatVector` or similar — when a consumer actually needs it. For `Decimal`, `Float80`, `Float16` etc. there's no fast path to add; consumers stay on `Array<T>`.
 
@@ -304,13 +307,42 @@ let updated = A.with(row: 0, column: 1, value: 99) // immutable single-element e
 
 // Mutating counterparts of every operator above:
 var acc = A
-acc += B          // in-place add
+acc += B          // in-place add (writes into acc's buffer)
 acc -= B          // in-place subtract
 acc *= 3.0        // in-place scalar multiply
-acc *= B          // in-place matrix multiply
+acc *= B          // matrix multiply (the product needs a new buffer)
+
+// A product into a buffer you keep: no allocation once `buffer` has the product's size.
+var buffer = Matrix<Double>.zero(size: 2)
+Matrix.multiply(A, B, into: &buffer)
 ```
 
+`+=`, `-=` and `*=` by a scalar write into the left-hand matrix's own storage, so they allocate nothing unless that storage is shared with another value (then the first write copies it once, like any Swift value). `Matrix.multiply(_:_:into:)` is for loops that multiply over and over: keep two matrices, alternate between them, and only the first products allocate. `squared(times:)` and the Taylor exponential are written that way.
+
 The `⋅` operator (the DOT OPERATOR character, U+22C5) is from `MathOperators`. It's overloaded for `Matrix ⋅ Matrix`, `Matrix ⋅ Vector` (i.e. `[Scalar]`), and `Scalar ⋅ Matrix`. Named-function equivalents (`A.applied(to: vector)`, `A * B`) are also available for projects that don't want the operator.
+
+### Matrix optics — editing entries in place
+
+`Matrix` ships [FP](https://github.com/luizmb/FP) optics for its entries. Reads go through the flat buffer and build no arrays; writes land in the buffer without copying the matrix:
+
+```swift
+import CoreFP
+
+let smallest = Matrix<Double>.diagonal.reduce(A, into: Double.infinity) { $0 = min($0, $1) }   // no array
+var M = A
+Matrix<Double>.diagonal.modifyMut(&M) { $0 -= 1 }                    // A − I, in place
+Matrix<Double>.each.modifyMut(&M) { $0 = max($0, 0) }                // every entry, in place
+Matrix<Double>.entry(row: 0, column: 1).tryModifyMut(&M) { $0 = 99 } // one entry, in place
+Matrix<Double>.entry(row: 5, column: 5).preview(M)                    // nil: outside the matrix
+```
+
+| Optic | Type | Focus |
+|---|---|---|
+| `Matrix.each` | `Traversal` | every entry, row by row (FP's `[Scalar].each` behind a lens onto the storage) |
+| `Matrix.diagonal` | `Traversal` | `A[i, i]` for `i < min(rows, columns)` |
+| `Matrix.entry(row:column:)` | `AffineTraversal` | one entry, or nothing when it's outside the matrix (the subscript traps instead) |
+
+They compose with any other optic through `compose` / `>>>`, so a matrix held inside your state can be edited through the same chain.
 
 ### Iterated action — applying a matrix many times
 
@@ -345,7 +377,7 @@ multiplied.rawValue   // chained matrix product
 
 ### Hardware-accelerated mat-vec and mat-mat
 
-`Matrix<Double>` and `Matrix<Float>` route their two hot operations — `apply(to:)` (matrix-vector) and `*` (matrix-matrix) — through Apple's Accelerate framework when available. No API change; the public methods stay identical. Routing is selected at compile time:
+`Matrix<Double>` and `Matrix<Float>` route their two hot operations — `apply(to:)` (matrix-vector) and `*` (matrix-matrix) — through Apple's Accelerate framework when available. No API change; the public methods stay identical. This also holds when the caller only knows `Scalar: ℝ` (the `⋅` operator, `Matrix.Product`, `squared(times:)`, `actions(on:count:)`, your own generic code): the generic implementations check for `Double` / `Float` first, and once specialised the check costs nothing. Routing is selected at compile time:
 
 | Platform / config | Backend | What runs |
 |---|---|---|
@@ -356,6 +388,19 @@ multiplied.rawValue   // chained matrix product
 Expected speedups for typical biokinetic / engineering matrix sizes (16×16 to 100×100): **5–10×** on mat-vec, **10–30×** on mat-mat on Apple via Accelerate. The wins grow with matrix size — Accelerate does cache blocking, prefetching, and (on M-series Macs) uses the AMX coprocessor for large enough operands.
 
 Other `Scalar` types (`Decimal`, `Float80`, `Float16`) always use the scalar Swift path — there's no cblas equivalent for them.
+
+The scalar Swift path is `@inlinable` buffer loops, so your module specialises it for your scalar type: no protocol dispatch, no iterator, no allocation per entry. A few medians (16×16 unless noted, `BenchmarkSuite`, Intel Mac):
+
+| | 0.6 Accelerate | 0.7 Accelerate | 0.6 Swift loops | 0.7 Swift loops |
+|---|---|---|---|---|
+| generic `*` / `⋅` (64×64) | 71 ms | 16 µs | 71 ms | 187 µs |
+| `+=` (64×64) | 2 ms, 16 386 mallocs | 2.5 µs, 0 mallocs | 2 ms | 2.5 µs, 0 mallocs |
+| `Taylor.exponential` | 2.6 ms | 21 µs | 26 ms | 69 µs |
+| Birchall `e^A` (scale, Taylor, square 10×) | 13 ms | 20 µs | | 60 µs |
+| `actions(on:count: 1000)` | 74 ms | 0.29 ms | 76 ms | 0.38 ms |
+| RK45 trajectory, `[Double]` 16, 200 outputs | 33 ms | 0.49 ms | 70 ms | 0.53 ms |
+
+Run `swift package benchmark` in `BenchmarkSuite/` to measure on your machine.
 
 **Linux performance**: an OpenBLAS-based bridge package is tracked as a future iteration in `MIGRATION_PLAN.md`. The shape will be a separate `swift-calx-openblas` Swift package consumers add explicitly when they want the Linux fast path — same repo can't ship OpenBLAS support cleanly because SwiftPM lacks a "build this system library only if `pkg-config` succeeds" condition.
 

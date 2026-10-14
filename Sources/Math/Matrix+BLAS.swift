@@ -24,6 +24,49 @@
 
 #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
 
+    // MARK: - Matrix * matrix into a buffer (generic entry point)
+
+    extension Matrix {
+        /// `c = a · b` with `cblas_dgemm` / `cblas_sgemm` when `Scalar` is `Double` / `Float`
+        /// (the buffers are rebound, not copied); `false` for any other scalar or an empty
+        /// shape, and the caller runs the Swift loop.
+        @inlinable
+        static func acceleratedProduct(
+            _ a: UnsafeBufferPointer<Scalar>,
+            _ b: UnsafeBufferPointer<Scalar>,
+            into c: UnsafeMutableBufferPointer<Scalar>,
+            rows: Int,
+            inner: Int,
+            columns: Int
+        ) -> Bool {
+            guard rows > 0, inner > 0, columns > 0,
+                  let pa = a.baseAddress, let pb = b.baseAddress, let pc = c.baseAddress
+            else { return false }
+            let (m, k, n) = (Int32(rows), Int32(inner), Int32(columns))
+            if Scalar.self == Double.self {
+                pa.withMemoryRebound(to: Double.self, capacity: a.count) { da in
+                    pb.withMemoryRebound(to: Double.self, capacity: b.count) { db in
+                        pc.withMemoryRebound(to: Double.self, capacity: c.count) { dc in
+                            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, da, k, db, n, 0.0, dc, n)
+                        }
+                    }
+                }
+                return true
+            }
+            if Scalar.self == Float.self {
+                pa.withMemoryRebound(to: Float.self, capacity: a.count) { fa in
+                    pb.withMemoryRebound(to: Float.self, capacity: b.count) { fb in
+                        pc.withMemoryRebound(to: Float.self, capacity: c.count) { fc in
+                            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, fa, k, fb, n, 0.0, fc, n)
+                        }
+                    }
+                }
+                return true
+            }
+            return false
+        }
+    }
+
     // MARK: - Matrix * vector (mat-vec)
 
     public extension Matrix where Scalar == Double {

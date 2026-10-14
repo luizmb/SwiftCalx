@@ -21,10 +21,12 @@ import RealNumber
 ///
 /// ## Mutation
 ///
-/// `Matrix` is immutable. Use ``with(row:column:value:)`` to obtain a new matrix with
-/// one entry changed. For bulk construction, build the `[Scalar]` storage first and
-/// hand it to the initializer in one call — this matches how `Array` is conventionally
-/// built before being wrapped in a value type.
+/// `Matrix` is a value: its entries can't be set from outside. Use
+/// ``with(row:column:value:)`` to obtain a new matrix with one entry changed. For bulk
+/// construction, build the `[Scalar]` storage first and hand it to the initializer in one
+/// call — this matches how `Array` is conventionally built before being wrapped in a value
+/// type. The compound operators (`+=`, `-=`, `*=` by a scalar) write into the existing
+/// storage instead of building a new one.
 public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
     /// Number of rows. Always non-negative.
     public let rows: Int
@@ -34,30 +36,40 @@ public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
 
     /// Row-major entries. Length is `rows * columns`. Reading `self[i, j]` is
     /// `storage[i * columns + j]`.
-    public let storage: [Scalar]
+    @inlinable
+    public var storage: [Scalar] { entries }
+
+    /// The entries, writable only inside the module so the compound operators can update
+    /// them in place.
+    @usableFromInline
+    var entries: [Scalar]
 
     /// Constructs a matrix from its dimensions and the flat row-major buffer.
     /// The caller is expected to provide a buffer of length `rows * columns`; out-of-range
     /// subscript access falls back to `Array`'s standard fatal trap (this matches the rest
     /// of the library — we don't add precondition checks for programmer errors).
+    @inlinable
     public init(rows: Int, columns: Int, storage: [Scalar]) {
         self.rows = rows
         self.columns = columns
-        self.storage = storage
+        entries = storage
     }
 
     /// O(1) read of the entry at row `i`, column `j`. Row-major lookup.
+    @inlinable
     public subscript(row: Int, column: Int) -> Scalar {
-        storage[row * columns + column]
+        entries[row * columns + column]
     }
 
     /// The `n × n` matrix of all zeros.
+    @inlinable
     public static func zero(size n: Int) -> Matrix {
         Matrix(rows: n, columns: n, storage: Array(repeating: 0, count: n * n))
     }
 
     /// The `n × n` identity matrix `Iₙ`: ones along the main diagonal, zeros elsewhere.
     /// Satisfies `Iₙ · M = M = M · Iₙ` for every conformable `M`.
+    @inlinable
     public static func identity(size n: Int) -> Matrix {
         Matrix(
             rows: n,
@@ -68,10 +80,11 @@ public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
 
     /// Returns a copy of this matrix with the entry at `(row, column)` replaced by `value`.
     /// All other entries are unchanged. The original matrix is untouched.
+    @inlinable
     public func with(row: Int, column: Int, value: Scalar) -> Matrix {
-        var s = storage
-        s[row * columns + column] = value
-        return Matrix(rows: rows, columns: columns, storage: s)
+        var copy = self
+        copy.entries[row * columns + column] = value
+        return copy
     }
 
     /// Returns `self` squared `n` times: `((self²)²)²…`.
@@ -84,7 +97,16 @@ public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
     /// scaling-and-squaring matrix-exponential variant): after computing `exp(A / 2^k)`
     /// via Taylor series, squaring `k` times recovers `exp(A) = (exp(A / 2^k))^(2^k)`.
     /// See ``Birchall/matrixExponential(_:tolerance:maxIterations:)``.
+    ///
+    /// Alternates between two buffers, so `k` squarings allocate two matrices, not `k`.
+    @inlinable
     public func squared(times n: Int) -> Matrix {
-        (0 ..< n).reduce(self) { acc, _ in acc * acc }
+        var current = self
+        var next = Matrix(rows: 0, columns: 0, storage: [])
+        for _ in 0 ..< n {
+            Matrix.multiply(current, current, into: &next)
+            swap(&current, &next)
+        }
+        return current
     }
 }

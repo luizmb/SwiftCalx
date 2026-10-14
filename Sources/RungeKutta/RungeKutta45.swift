@@ -55,69 +55,73 @@ public enum RungeKutta45 {}
 //
 // All coefficients are exact rationals from the Dormand–Prince 1980 paper.
 
-fileprivate extension RungeKutta45 {
+extension RungeKutta45 {
     /// Time offsets at which the seven stages are evaluated, relative to `t`.
     /// `c1 = 0` (the start of the step) is implicit and omitted.
+    @usableFromInline
     enum C {
-        static let c2 = 1.0 / 5.0
-        static let c3 = 3.0 / 10.0
-        static let c4 = 4.0 / 5.0
-        static let c5 = 8.0 / 9.0
-        static let c6 = 1.0
-        static let c7 = 1.0
+        @inlinable static var c2: Double { 1.0 / 5.0 }
+        @inlinable static var c3: Double { 3.0 / 10.0 }
+        @inlinable static var c4: Double { 4.0 / 5.0 }
+        @inlinable static var c5: Double { 8.0 / 9.0 }
+        @inlinable static var c6: Double { 1.0 }
+        @inlinable static var c7: Double { 1.0 }
     }
 
     /// Inter-stage weights — the `a[i][j]` from the Butcher tableau, naming the
     /// fields directly so the recurrence reads like the textbook.
+    @usableFromInline
     enum A {
-        static let a21 = 1.0 / 5.0
+        @inlinable static var a21: Double { 1.0 / 5.0 }
 
-        static let a31 = 3.0 / 40.0
-        static let a32 = 9.0 / 40.0
+        @inlinable static var a31: Double { 3.0 / 40.0 }
+        @inlinable static var a32: Double { 9.0 / 40.0 }
 
-        static let a41 = 44.0 / 45.0
-        static let a42 = -56.0 / 15.0
-        static let a43 = 32.0 / 9.0
+        @inlinable static var a41: Double { 44.0 / 45.0 }
+        @inlinable static var a42: Double { -56.0 / 15.0 }
+        @inlinable static var a43: Double { 32.0 / 9.0 }
 
-        static let a51 = 19_372.0 / 6_561.0
-        static let a52 = -25_360.0 / 2_187.0
-        static let a53 = 64_448.0 / 6_561.0
-        static let a54 = -212.0 / 729.0
+        @inlinable static var a51: Double { 19_372.0 / 6_561.0 }
+        @inlinable static var a52: Double { -25_360.0 / 2_187.0 }
+        @inlinable static var a53: Double { 64_448.0 / 6_561.0 }
+        @inlinable static var a54: Double { -212.0 / 729.0 }
 
-        static let a61 = 9_017.0 / 3_168.0
-        static let a62 = -355.0 / 33.0
-        static let a63 = 46_732.0 / 5_247.0
-        static let a64 = 49.0 / 176.0
-        static let a65 = -5_103.0 / 18_656.0
+        @inlinable static var a61: Double { 9_017.0 / 3_168.0 }
+        @inlinable static var a62: Double { -355.0 / 33.0 }
+        @inlinable static var a63: Double { 46_732.0 / 5_247.0 }
+        @inlinable static var a64: Double { 49.0 / 176.0 }
+        @inlinable static var a65: Double { -5_103.0 / 18_656.0 }
 
         // a7i double as the b5 weights (FSAL property).
         // a72 = 0 — canonical-tableau zero, elided from code.
-        static let a71 = 35.0 / 384.0
-        static let a73 = 500.0 / 1_113.0
-        static let a74 = 125.0 / 192.0
-        static let a75 = -2_187.0 / 6_784.0
-        static let a76 = 11.0 / 84.0
+        @inlinable static var a71: Double { 35.0 / 384.0 }
+        @inlinable static var a73: Double { 500.0 / 1_113.0 }
+        @inlinable static var a74: Double { 125.0 / 192.0 }
+        @inlinable static var a75: Double { -2_187.0 / 6_784.0 }
+        @inlinable static var a76: Double { 11.0 / 84.0 }
     }
 
     /// 5th-order solution weights. Equal to `a7*` (FSAL).
     /// b2 = b7 = 0 — canonical-tableau zeroes, elided from code.
+    @usableFromInline
     enum B5 {
-        static let b1 = A.a71
-        static let b3 = A.a73
-        static let b4 = A.a74
-        static let b5 = A.a75
-        static let b6 = A.a76
+        @inlinable static var b1: Double { A.a71 }
+        @inlinable static var b3: Double { A.a73 }
+        @inlinable static var b4: Double { A.a74 }
+        @inlinable static var b5: Double { A.a75 }
+        @inlinable static var b6: Double { A.a76 }
     }
 
     /// 4th-order embedded weights — used to estimate the local truncation error.
     /// b2 = 0 — canonical-tableau zero, elided from code.
+    @usableFromInline
     enum B4 {
-        static let b1 = 5_179.0 / 57_600.0
-        static let b3 = 7_571.0 / 16_695.0
-        static let b4 = 393.0 / 640.0
-        static let b5 = -92_097.0 / 339_200.0
-        static let b6 = 187.0 / 2_100.0
-        static let b7 = 1.0 / 40.0
+        @inlinable static var b1: Double { 5_179.0 / 57_600.0 }
+        @inlinable static var b3: Double { 7_571.0 / 16_695.0 }
+        @inlinable static var b4: Double { 393.0 / 640.0 }
+        @inlinable static var b5: Double { -92_097.0 / 339_200.0 }
+        @inlinable static var b6: Double { 187.0 / 2_100.0 }
+        @inlinable static var b7: Double { 1.0 / 40.0 }
     }
 }
 
@@ -141,12 +145,21 @@ public extension RungeKutta45 {
         public let kLast: State
         /// Infinity-norm of `(y5 − y4)`. Compared against the caller's tolerance.
         public let errorNorm: Double
+
+        @inlinable
+        init(y5: State, y4: State, kLast: State, errorNorm: Double) {
+            self.y5 = y5
+            self.y4 = y4
+            self.kLast = kLast
+            self.errorNorm = errorNorm
+        }
     }
 
     /// Compute one Dormand–Prince step from `(t, y)` of size `h`, given the
     /// initial slope `k1 = f(t, y)`. Returns the embedded pair + error norm
     /// without judging acceptability — see ``trajectory(from:derivative:startingAt:through:tolerance:initialStep:minStep:maxStep:maxIterations:)``
     /// for the adaptive driver that does the accept/reject + step-size logic.
+    @inlinable
     static func step<State: NormedVectorState>(
         from t: Double,
         y: State,
@@ -154,60 +167,37 @@ public extension RungeKutta45 {
         size h: Double,
         derivative f: @Sendable (Double, State) -> State
     ) -> Step<State> where State.Scalar == Double {
-        // Each stage's input state is built from k1..k_{i-1} as a sum of scaled
-        // states. We break each combination into individually-typed `let`s so
-        // the Swift type-checker has a tractable expression at each step
-        // (otherwise a single deeply-nested `y + h * (a₁k₁ + a₂k₂ + …)` blows
-        // up generic resolution time on `+` / `*`).
+        // Each stage's input state is `y + Σ (h·aᵢⱼ)·kⱼ`, accumulated left to right into
+        // one fresh state with `add(_:scaledBy:)`: the same sums as writing it with `+` and
+        // `*`, without a new state for every term.
+        func stage(_ terms: (State, Double)...) -> State {
+            var sum = y
+            for (k, a) in terms {
+                sum.add(k, scaledBy: h * a)
+            }
+            return sum
+        }
 
-        let k2 = f(t + C.c2 * h, y + (h * A.a21) * k1)
-
-        let s3a = (h * A.a31) * k1
-        let s3b = (h * A.a32) * k2
-        let k3 = f(t + C.c3 * h, y + s3a + s3b)
-
-        let s4a = (h * A.a41) * k1
-        let s4b = (h * A.a42) * k2
-        let s4c = (h * A.a43) * k3
-        let k4 = f(t + C.c4 * h, y + s4a + s4b + s4c)
-
-        let s5a = (h * A.a51) * k1
-        let s5b = (h * A.a52) * k2
-        let s5c = (h * A.a53) * k3
-        let s5d = (h * A.a54) * k4
-        let k5 = f(t + C.c5 * h, y + s5a + s5b + s5c + s5d)
-
-        let s6a = (h * A.a61) * k1
-        let s6b = (h * A.a62) * k2
-        let s6c = (h * A.a63) * k3
-        let s6d = (h * A.a64) * k4
-        let s6e = (h * A.a65) * k5
-        let k6 = f(t + C.c6 * h, y + s6a + s6b + s6c + s6d + s6e)
+        let k2 = f(t + C.c2 * h, stage((k1, A.a21)))
+        let k3 = f(t + C.c3 * h, stage((k1, A.a31), (k2, A.a32)))
+        let k4 = f(t + C.c4 * h, stage((k1, A.a41), (k2, A.a42), (k3, A.a43)))
+        let k5 = f(t + C.c5 * h, stage((k1, A.a51), (k2, A.a52), (k3, A.a53), (k4, A.a54)))
+        let k6 = f(t + C.c6 * h, stage((k1, A.a61), (k2, A.a62), (k3, A.a63), (k4, A.a64), (k5, A.a65)))
 
         // 5th-order solution. B5.b2 and B5.b7 are zero, so those terms drop out.
-        let y5a = (h * B5.b1) * k1
-        let y5b = (h * B5.b3) * k3
-        let y5c = (h * B5.b4) * k4
-        let y5d = (h * B5.b5) * k5
-        let y5e = (h * B5.b6) * k6
-        let y5 = y + y5a + y5b + y5c + y5d + y5e
+        let y5 = stage((k1, B5.b1), (k3, B5.b3), (k4, B5.b4), (k5, B5.b5), (k6, B5.b6))
 
         // k7 = f(t + h, y5) — the FSAL stage. Used in the 4th-order estimate
         // *and* reused as next step's k1 when this step is accepted.
         let k7 = f(t + C.c7 * h, y5)
 
         // 4th-order embedded estimate. B4.b2 is zero.
-        let y4a = (h * B4.b1) * k1
-        let y4b = (h * B4.b3) * k3
-        let y4c = (h * B4.b4) * k4
-        let y4d = (h * B4.b5) * k5
-        let y4e = (h * B4.b6) * k6
-        let y4f = (h * B4.b7) * k7
-        let y4 = y + y4a + y4b + y4c + y4d + y4e + y4f
+        let y4 = stage((k1, B4.b1), (k3, B4.b3), (k4, B4.b4), (k5, B4.b5), (k6, B4.b6), (k7, B4.b7))
 
         // Error = ||y5 − y4|| in the infinity norm. We compute `y5 − y4` as
         // `y5 + (−1)·y4` since VectorState only requires `+` and scalar `*`.
-        let diff = y5 + (-1.0) * y4
+        var diff = y5
+        diff.add(y4, scaledBy: -1.0)
         return Step(y5: y5, y4: y4, kLast: k7, errorNorm: diff.infinityNorm)
     }
 }

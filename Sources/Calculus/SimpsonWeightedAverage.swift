@@ -44,11 +44,17 @@ public enum SimpsonWeightedAverage {
     /// Positional rather than labelled so the function reads symmetrically with the
     /// math notation. In RK4 the four arguments are the slope-times-step contributions
     /// `Δy₁ … Δy₄` (or `k₁ … k₄` if you prefer slope-only and let the caller scale).
+    @inlinable
     public static func calculate<State: VectorState>(
         _ v1: State, _ v2: State, _ v3: State, _ v4: State
     ) -> State {
         let two: State.Scalar = 2
         let six: State.Scalar = 6
-        return (1 / six) * (v1 + two * v2 + two * v3 + v4)
+        // `v1 + 2·v2 + 2·v3 + v4`, summed left to right into one state.
+        var sum = v1
+        sum.add(v2, scaledBy: two)
+        sum.add(v3, scaledBy: two)
+        sum.add(v4, scaledBy: 1)
+        return (1 / six) * sum
     }
 }
