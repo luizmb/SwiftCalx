@@ -56,7 +56,7 @@ import RealNumber
 public struct AcceleratedVector: Sendable {
     /// The underlying `[Double]` buffer. Same shape and indexing as a flat
     /// row of `Matrix`; safe to hand back out for interop.
-    public let storage: [Double]
+    public internal(set) var storage: [Double]
 
     public init(_ storage: [Double]) {
         self.storage = storage

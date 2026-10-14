@@ -54,6 +54,12 @@ extension AcceleratedVector: VectorState {
             return AcceleratedVector(vector.storage.map { scalar * $0 })
         #endif
     }
+
+    /// In place: `self[i] = self[i] + scalar * other[i]`, so an RK stage builds one vector
+    /// instead of two per term.
+    public mutating func add(_ other: AcceleratedVector, scaledBy scalar: Double) {
+        storage.formElementwise(other.storage) { lhs, rhs in lhs + scalar * rhs }
+    }
 }
 
 extension AcceleratedVector: NormedVectorState {
@@ -99,7 +105,8 @@ public extension AcceleratedVector {
         #endif
     }
 
-    static func += (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs = lhs + rhs }
-    static func -= (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs = lhs - rhs }
-    static func *= (lhs: inout AcceleratedVector, scalar: Double) { lhs = scalar * lhs }
+    // The compound forms write into `lhs`'s storage (no allocation unless it's shared).
+    static func += (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs.storage.formElementwise(rhs.storage, +) }
+    static func -= (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs.storage.formElementwise(rhs.storage, -) }
+    static func *= (lhs: inout AcceleratedVector, scalar: Double) { lhs.storage.formScaled(by: scalar) }
 }

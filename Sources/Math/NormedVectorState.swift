@@ -24,10 +24,15 @@ public protocol NormedVectorState: VectorState {
 }
 
 extension Array: NormedVectorState where Element: ℝ {
+    @inlinable
     public var infinityNorm: Element {
-        reduce(Element.zero) { acc, x in
-            let m = x < .zero ? -x : x
-            return m > acc ? m : acc
+        withUnsafeBufferPointer { buffer in
+            var norm = Element.zero
+            for x in buffer {
+                let m = x < .zero ? -x : x
+                if m > norm { norm = m }
+            }
+            return norm
         }
     }
 }

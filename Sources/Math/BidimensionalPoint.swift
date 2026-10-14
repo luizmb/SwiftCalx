@@ -8,6 +8,7 @@ public struct BidimensionalPoint<T: ℝ>: Sendable, Equatable {
     public let x: T
     public let y: T
 
+    @inlinable
     public init(x: T, y: T) {
         self.x = x
         self.y = y
@@ -27,14 +28,17 @@ public extension BidimensionalPoint {
         BidimensionalPoint(x: .zero, y: .zero)
     }
 
+    @inlinable
     static func + (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 
+    @inlinable
     static func - (lhs: BidimensionalPoint, rhs: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
 
+    @inlinable
     static func * (scalar: T, point: BidimensionalPoint) -> BidimensionalPoint {
         BidimensionalPoint(x: scalar * point.x, y: scalar * point.y)
     }

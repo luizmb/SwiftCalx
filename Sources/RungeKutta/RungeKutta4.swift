@@ -36,6 +36,7 @@ public extension RungeKutta4 {
     /// Scalar RK4 step. Returns the function `(point, Δx) → Δy` — pure delta, *not*
     /// `yₙ + Δy`. Wrap with ``calculateNextPoint(Δx:stepCalculator:)`` (or call
     /// `lastPoint.y + Δy` yourself) to advance.
+    @inlinable
     static func rk4<T: ℝ & VectorState>(_ fn: @escaping (BidimensionalPoint<T>) -> T)
     -> ( /* lastPoint pt𝓃: */ BidimensionalPoint<T>, /* Δx: */ T) -> T where T.Scalar == T {
         { pt𝓃, Δx in
@@ -50,6 +51,11 @@ public extension RungeKutta4 {
     /// `reduce`-shaped helper that appends the next `(x + Δx, y + Δy)` point.
     /// The `currentPointInTime` argument from the reducing sequence is unused —
     /// it's only here so the signature lines up with `reduce`'s `(Accumulator, Element)`.
+    ///
+    /// Each call returns a new array, so a fold over `n` steps copies `O(n²)` points in
+    /// total. Fine for short runs; for long ones, append to one array with
+    /// `reduce(into:)` and ``rk4(_:)`` directly.
+    @inlinable
     static func calculateNextPoint<T: ℝ>(
         Δx: T,
         stepCalculator: @escaping (BidimensionalPoint<T>, T) -> T
