@@ -340,7 +340,10 @@ Matrix<Double>.entry(row: 5, column: 5).preview(M)                    // nil: ou
 |---|---|---|
 | `Matrix.each` | `Traversal` | every entry, row by row (FP's `[Scalar].each` behind a lens onto the storage) |
 | `Matrix.diagonal` | `Traversal` | `A[i, i]` for `i < min(rows, columns)` |
+| `Matrix.row(_:)` | `Traversal` | one row, left to right (nothing when out of range) |
+| `Matrix.column(_:)` | `Traversal` | one column, top to bottom (nothing when out of range) |
 | `Matrix.entry(row:column:)` | `AffineTraversal` | one entry, or nothing when it's outside the matrix (the subscript traps instead) |
+| `AcceleratedVector.each` / `.ix(_:)` | `Traversal` / `AffineTraversal` | every component / one component (FP's `[Double]` optics behind a lens onto the storage) |
 
 They compose with any other optic through `compose` / `>>>`, so a matrix held inside your state can be edited through the same chain.
 
@@ -703,13 +706,15 @@ import RungeKutta
 
 // y' = x·√y, y(0) = 1 — exact solution y(x) = (x² + 4)² / 16
 let stepFn = RungeKutta4.rk4 { p in p.x * sqrt(p.y) }
-let appender = RungeKutta4.calculateNextPoint(Δx: 0.1, stepCalculator: stepFn)
+let appender = RungeKutta4.calculateNextPointMut(Δx: 0.1, stepCalculator: stepFn)
 let points = stride(from: 0.1, through: 10, by: 0.1).reduce(
-    [BidimensionalPoint(x: 0, y: 1)],
+    into: [BidimensionalPoint(x: 0, y: 1)],
     appender
 )
 points.last?.y   // ≈ 26.0 (exact: 104² / 16 = 26.0)
 ```
+
+`calculateNextPointMut` / `calculateNextStateMut` append to the trajectory in place, so the fold is linear in the number of steps. Their pure twins `calculateNextPoint` / `calculateNextState` (for `reduce(_:_:)`) return a new trajectory each step, which copies every earlier point: quadratic over a long run (16 compartments, 1 000 steps: 21 ms against 2.7 ms).
 
 Vector example (multi-component ODE, `y` is a vector):
 

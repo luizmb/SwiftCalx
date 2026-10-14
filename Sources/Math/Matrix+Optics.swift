@@ -18,24 +18,27 @@ public extension Matrix {
     /// The main diagonal `A[i, i]`, for `i < min(rows, columns)`. Folding it (`reduce`,
     /// `foldMap`, `count`) builds no array; writing it touches only those entries.
     static var diagonal: Traversal<Matrix, Scalar> {
-        Traversal(
-            forEach: { @Sendable matrix, body in
-                let (length, stride) = (Swift.min(matrix.rows, matrix.columns), matrix.columns + 1)
-                matrix.entries.withUnsafeBufferPointer { buffer in
-                    for i in 0 ..< length {
-                        body(buffer[i * stride])
-                    }
-                }
-            },
-            modifyMut: { @Sendable matrix, f in
-                let (length, stride) = (Swift.min(matrix.rows, matrix.columns), matrix.columns + 1)
-                matrix.entries.withUnsafeMutableBufferPointer { buffer in
-                    for i in 0 ..< length {
-                        f(&buffer[i * stride])
-                    }
-                }
-            }
-        )
+        strided { matrix in (start: 0, count: Swift.min(matrix.rows, matrix.columns), stride: matrix.columns + 1) }
+    }
+
+    /// The entries of one row, left to right; nothing when the row is outside the matrix.
+    static func row(_ index: Int) -> Traversal<Matrix, Scalar> {
+        strided { matrix in
+            (0 ..< matrix.rows).contains(index)
+                ? (start: index * matrix.columns, count: matrix.columns, stride: 1)
+                : (start: 0, count: 0, stride: 1)
+        }
+    }
+
+    /// The entries of one column, top to bottom; nothing when the column is outside the
+    /// matrix. In a compartmental model's coefficient matrix that's one compartment's
+    /// inflow and outflow coefficients, editable in place.
+    static func column(_ index: Int) -> Traversal<Matrix, Scalar> {
+        strided { matrix in
+            (0 ..< matrix.columns).contains(index)
+                ? (start: index, count: matrix.rows, stride: matrix.columns)
+                : (start: 0, count: 0, stride: 1)
+        }
     }
 
     /// The entry at `(row, column)`, or nothing when it's outside the matrix (unlike the
@@ -73,6 +76,32 @@ extension Matrix {
                 return copy
             },
             modifyMut: { @Sendable matrix, f in f(&matrix.entries) }
+        )
+    }
+
+    /// A traversal over `count` entries of the flat buffer, `stride` apart from `start`:
+    /// rows, columns and the diagonal are all this shape. Reads and writes go through the
+    /// buffer, so they build no array and write in place.
+    static func strided(
+        _ layout: @escaping @Sendable (Matrix) -> (start: Int, count: Int, stride: Int)
+    ) -> Traversal<Matrix, Scalar> {
+        Traversal(
+            forEach: { @Sendable matrix, body in
+                let (start, count, stride) = layout(matrix)
+                matrix.entries.withUnsafeBufferPointer { buffer in
+                    for i in 0 ..< count {
+                        body(buffer[start + i * stride])
+                    }
+                }
+            },
+            modifyMut: { @Sendable matrix, f in
+                let (start, count, stride) = layout(matrix)
+                matrix.entries.withUnsafeMutableBufferPointer { buffer in
+                    for i in 0 ..< count {
+                        f(&buffer[start + i * stride])
+                    }
+                }
+            }
         )
     }
 

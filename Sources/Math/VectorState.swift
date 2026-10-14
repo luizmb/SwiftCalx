@@ -48,7 +48,7 @@ extension Array: VectorState where Element: ℝ {
     }
 
     /// In place: `self[i] = self[i] + scalar * other[i]` (no allocation unless the buffer is
-    /// shared). Like `+`, only the first `min(count, other.count)` elements take part.
+    /// shared). Like `+`, the result is as long as the shorter operand.
     @inlinable
     public mutating func add(_ other: [Element], scaledBy scalar: Element) {
         formElementwise(other) { lhs, rhs in lhs + scalar * rhs }

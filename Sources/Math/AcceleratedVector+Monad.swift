@@ -70,14 +70,14 @@ public extension AcceleratedVector {
     ///
     ///     concat :: [[a]] -> [a]
     static func concat(_ vectors: [AcceleratedVector]) -> AcceleratedVector {
-        AcceleratedVector(vectors.flatMap(\.storage))
+        AcceleratedVector(vectors.map(\.storage).joinedStorage())
     }
 
     /// Monadic join — flattens a vector of vectors. Mirrors `Array.join`.
     ///
     ///     join :: m (m a) -> m a
     static func join(_ nested: [AcceleratedVector]) -> AcceleratedVector {
-        AcceleratedVector(nested.flatMap(\.storage))
+        concat(nested)
     }
 
     /// Discards the values, keeping only the structure. Mirrors `Array.void`.
@@ -85,5 +85,17 @@ public extension AcceleratedVector {
     ///     void :: m a -> m ()
     func void() -> [Void] {
         storage.map { _ in () }
+    }
+}
+
+extension [[Double]] {
+    /// The arrays end to end, in one allocation sized up front.
+    func joinedStorage() -> [Double] {
+        var result: [Double] = []
+        result.reserveCapacity(reduce(into: 0) { $0 += $1.count })
+        for part in self {
+            result.append(contentsOf: part)
+        }
+        return result
     }
 }

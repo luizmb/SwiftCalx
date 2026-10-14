@@ -71,19 +71,24 @@ public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
     /// Satisfies `Iₙ · M = M = M · Iₙ` for every conformable `M`.
     @inlinable
     public static func identity(size n: Int) -> Matrix {
-        Matrix(
-            rows: n,
-            columns: n,
-            storage: (0 ..< n * n).map { $0 / n == $0 % n ? 1 : 0 }
-        )
+        var identity = zero(size: n)
+        identity.entries.withUnsafeMutableBufferPointer { buffer in
+            for i in 0 ..< n {
+                buffer[i * (n + 1)] = 1
+            }
+        }
+        return identity
     }
 
     /// Returns a copy of this matrix with the entry at `(row, column)` replaced by `value`.
     /// All other entries are unchanged. The original matrix is untouched.
+    ///
+    /// `consuming`: when the caller hands over a matrix it no longer needs (a temporary, or
+    /// `consume m`), the entry is written into that buffer with no copy.
     @inlinable
-    public func with(row: Int, column: Int, value: Scalar) -> Matrix {
-        var copy = self
-        copy.entries[row * columns + column] = value
+    public consuming func with(row: Int, column: Int, value: Scalar) -> Matrix {
+        var copy = consume self
+        copy.entries[row * copy.columns + column] = value
         return copy
     }
 

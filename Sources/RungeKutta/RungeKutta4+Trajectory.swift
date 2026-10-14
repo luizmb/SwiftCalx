@@ -8,8 +8,9 @@ public extension RungeKutta4 {
     /// a fixed RK4 step of size `step`, returning the full `(time, state)` trajectory.
     ///
     /// This is the **default driver** for one-shot integration: build the step closure
-    /// via ``rk4(_:)``, then fold over `stride(from: step, through: end, by: step)`,
-    /// appending each `(t + Δt, y + Δy)` to one array (linear in the number of steps).
+    /// via ``rk4(_:)``, then fold over `stride(from: step, through: end, by: step)` with
+    /// ``calculateNextStateMut(Δt:stepCalculator:)``, appending each `(t + Δt, y + Δy)` to
+    /// one array (linear in the number of steps).
     /// The starting `(0, initialState)` is included as the first element of the result.
     ///
     /// Callers that want a different sampling cadence (e.g. record every Nth RK4
@@ -26,13 +27,9 @@ public extension RungeKutta4 {
         step: Double,
         through end: Double
     ) -> [(time: Double, state: State)] where State.Scalar == Double {
-        // `reduce(into:)` appends to one array; `calculateNextState` returns a new trajectory
-        // per step, which copies every earlier point each time (O(n²) over the run).
-        let stepCalculator = rk4(derivative)
-        return stride(from: step, through: end, by: step).reduce(into: [(time: 0.0, state: initialState)]) { points, _ in
-            guard let last = points.last else { return }
-            let Δy = stepCalculator(last.time, last.state, step)
-            points.append((time: last.time + step, state: last.state + Δy))
-        }
+        stride(from: step, through: end, by: step).reduce(
+            into: [(time: 0.0, state: initialState)],
+            calculateNextStateMut(Δt: step, stepCalculator: rk4(derivative))
+        )
     }
 }

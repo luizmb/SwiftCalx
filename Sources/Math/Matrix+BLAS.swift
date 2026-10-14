@@ -258,8 +258,8 @@
                 vDSP_Length
             ) -> Void
         ) -> Matrix {
-            let count = lhs.storage.count
-            guard count > 0 else { return lhs }
+            let count = Swift.min(lhs.storage.count, rhs.storage.count)
+            guard count > 0 else { return Matrix(rows: lhs.rows, columns: lhs.columns, storage: []) }
             var result = [Double](repeating: 0, count: count)
             lhs.storage.withUnsafeBufferPointer { aBuf in
                 rhs.storage.withUnsafeBufferPointer { bBuf in
@@ -310,8 +310,8 @@
                 vDSP_Length
             ) -> Void
         ) -> Matrix {
-            let count = lhs.storage.count
-            guard count > 0 else { return lhs }
+            let count = Swift.min(lhs.storage.count, rhs.storage.count)
+            guard count > 0 else { return Matrix(rows: lhs.rows, columns: lhs.columns, storage: []) }
             var result = [Float](repeating: 0, count: count)
             lhs.storage.withUnsafeBufferPointer { aBuf in
                 rhs.storage.withUnsafeBufferPointer { bBuf in

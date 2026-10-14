@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Matrix optics: `Matrix.each`, `Matrix.diagonal` (`Traversal`), `Matrix.entry(row:column:)`
   (`AffineTraversal`). Writes go into the buffer in place.
 - `BenchmarkSuite/`: package-benchmark suite for the matrix and ODE hot paths.
+- `RungeKutta4.calculateNextStateMut` / `calculateNextPointMut`: `reduce(into:)`-shaped twins
+  of the trajectory appenders, linear over a run. The pure ones stay and take the trajectory
+  `consuming`, so a handed-over trajectory is appended to without a copy.
+- Optics: `Matrix.row(_:)`, `Matrix.column(_:)`, `AcceleratedVector.each`, `AcceleratedVector.ix(_:)`.
+- `AcceleratedVector.reduce(into:_:)`.
 
 ### Changed
 - Requires FP 3.0.0 (`from: "3.0.0"`).
@@ -27,6 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `+=`, `-=`, `*=` (scalar) on `Matrix` and `AcceleratedVector` write in place.
 - `squared(times:)` and `Taylor.exponential` alternate two buffers instead of allocating per step.
 - `RungeKutta4.trajectory` appends in place (was O(n²) through `calculateNextState`).
+- `AcceleratedVector` `liftA2`, `apply`, `seqLeft`, `seqRight`, `cartesian`, `concat`, `join`
+  build their result in one allocation (no inner array per element).
+- `Matrix.with(row:column:value:)` and `AcceleratedVector.combine` take the value `consuming`:
+  a temporary or `consume x` is written into without a copy.
+- `Matrix.identity` fills the diagonal of a zero matrix instead of computing every entry.
+
+### Fixed
+- Accelerate `Matrix` `+` / `-` (`Double`, `Float`), `AcceleratedVector` `+` / `-` and the
+  `AcceleratedVector` `⋅` dot product read past the shorter operand when lengths differed;
+  they now stop at the shorter one, like the Swift path.
+- In-place `+=`, `-=` and `add(_:scaledBy:)` keep the shorter length, like `+` and `-`.
 
 ## [0.4.0] - 2026-07-05
 

@@ -32,7 +32,7 @@ public func ⋅ (scalar: Double, vector: AcceleratedVector) -> AcceleratedVector
 /// `zip + reduce` on non-Apple builds or `-D SWIFTCALX_NO_ACCELERATE`.
 public func ⋅ (lhs: AcceleratedVector, rhs: AcceleratedVector) -> Double {
     #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
-        let n = Int32(lhs.storage.count)
+        let n = Int32(Swift.min(lhs.storage.count, rhs.storage.count))
         var result = 0.0
         lhs.storage.withUnsafeBufferPointer { lBuf in
             rhs.storage.withUnsafeBufferPointer { rBuf in

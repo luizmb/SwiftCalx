@@ -84,14 +84,15 @@ extension AcceleratedVector: Hashable {}
 // empty vector. Fold a sequence of vectors into one with `mconcat`.
 
 extension AcceleratedVector: Semigroup {
-    public static func combine(_ lhs: AcceleratedVector, _ rhs: AcceleratedVector) -> AcceleratedVector {
+    public static func combine(_ lhs: consuming AcceleratedVector, _ rhs: AcceleratedVector) -> AcceleratedVector {
         // NB: use `append(contentsOf:)`, not `lhs.storage + rhs.storage` —
         // `Array: VectorState where Element: ℝ` (VectorState.swift) defines
         // `+` for `[Double]` to be *elementwise addition*, which silently
         // wins over stdlib's `RangeReplaceableCollection.+` concatenation.
-        var concatenated = lhs.storage
-        concatenated.append(contentsOf: rhs.storage)
-        return AcceleratedVector(concatenated)
+        // `consuming lhs`: a temporary left side (`a <> b <> c`) is extended in place.
+        var concatenated = consume lhs
+        concatenated.storage.append(contentsOf: rhs.storage)
+        return concatenated
     }
 }
 

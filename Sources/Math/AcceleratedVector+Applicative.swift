@@ -17,9 +17,7 @@ public extension AcceleratedVector {
         _ fn: @escaping @Sendable (Double, Double) -> Double
     ) -> @Sendable (AcceleratedVector, AcceleratedVector) -> AcceleratedVector {
         { lhs, rhs in
-            AcceleratedVector(lhs.storage.flatMap { a in
-                rhs.storage.map { b in fn(a, b) }
-            })
+            AcceleratedVector(cartesianProduct(lhs.storage, rhs.storage, fn))
         }
     }
 
@@ -32,21 +30,21 @@ public extension AcceleratedVector {
         _ functions: [@Sendable (Double) -> Double],
         _ values: AcceleratedVector
     ) -> AcceleratedVector {
-        AcceleratedVector(functions.flatMap { f in values.storage.map(f) })
+        AcceleratedVector(cartesianProduct(functions, values.storage) { f, value in f(value) })
     }
 
     /// Cartesian product, keeping right values. Mirrors `Array.seqRight`.
     ///
     ///     seqRight :: AcceleratedVector -> AcceleratedVector -> AcceleratedVector
     func seqRight(_ rhs: AcceleratedVector) -> AcceleratedVector {
-        AcceleratedVector(storage.flatMap { _ in rhs.storage })
+        AcceleratedVector(cartesianProduct(storage, rhs.storage) { _, b in b })
     }
 
     /// Cartesian product, keeping left values. Mirrors `Array.seqLeft`.
     ///
     ///     seqLeft :: AcceleratedVector -> AcceleratedVector -> AcceleratedVector
     func seqLeft(_ rhs: AcceleratedVector) -> AcceleratedVector {
-        AcceleratedVector(storage.flatMap { a in rhs.storage.map { _ in a } })
+        AcceleratedVector(cartesianProduct(storage, rhs.storage) { a, _ in a })
     }
 
     /// Index-aligned zip — pairs elements at matching positions, stopping at
@@ -58,4 +56,18 @@ public extension AcceleratedVector {
     static func zip(_ lhs: AcceleratedVector, _ rhs: AcceleratedVector) -> [(Double, Double)] {
         Array(Swift.zip(lhs.storage, rhs.storage))
     }
+}
+
+/// `[combine(a, b) for a in lhs for b in rhs]`, built in one allocation (a `flatMap` over a
+/// `map` would build one inner array per element of `lhs`).
+@inlinable
+func cartesianProduct<A, B, T>(_ lhs: [A], _ rhs: [B], _ combine: (A, B) -> T) -> [T] {
+    var result: [T] = []
+    result.reserveCapacity(lhs.count * rhs.count)
+    for a in lhs {
+        for b in rhs {
+            result.append(combine(a, b))
+        }
+    }
+    return result
 }
