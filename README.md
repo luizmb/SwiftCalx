@@ -260,7 +260,7 @@ v.mapAccelerated { $0 * 2 } // AcceleratedVector — preserves the type for (Dou
 
 **Why a wrapper around `[Double]`?** Swift selects the `VectorState` protocol witness for `+` and `*` at the conformance site. `Array<Element>` conforms when `Element: ℝ` — generic over Element, so its witness is the portable buffer loop, not vDSP. There's no way to "specialise" that witness for `Element == Double` without violating the protocol rules (multiple conformances, name-clash with the existing `+`). `AcceleratedVector` sidesteps the problem by being its own concrete type whose witness for `+` IS the vDSP path. Generic solver code dispatches naturally through the witness — no specialisation overloads on RK45 / RK4, no runtime type checks, no `.+` operator.
 
-Since 0.7.0 the gap is small: the solvers are `@inlinable`, so they're specialised for `[Double]` in your module, and both types build each RK stage in place (`add(_:scaledBy:)`). Measured on RK45 with a 16-compartment state, `[Double]` and `AcceleratedVector` are within 10% of each other.
+Since 1.0.0 the gap is small: the solvers are `@inlinable`, so they're specialised for `[Double]` in your module, and both types build each RK stage in place (`add(_:scaledBy:)`). Measured on RK45 with a 16-compartment state, `[Double]` and `AcceleratedVector` are within 10% of each other.
 
 **Why not generic `AcceleratedVector<T: ℝ>`?** The same dispatch problem. A generic version would have to declare its `VectorState` conformance for any `T: ℝ`, and the witness body couldn't call `vDSP_vaddD` because it wouldn't know `T == Double`. The whole reason for AcceleratedVector existing is that it's *concrete*. For `Float` (which also has vDSP / cblas support), the right shape is a sibling concrete type — `AcceleratedFloatVector` or similar — when a consumer actually needs it. For `Decimal`, `Float80`, `Float16` etc. there's no fast path to add; consumers stay on `Array<T>`.
 
@@ -397,7 +397,7 @@ Other `Scalar` types (`Decimal`, `Float80`, `Float16`) always use the scalar Swi
 
 The scalar Swift path is `@inlinable` buffer loops, so your module specialises it for your scalar type: no protocol dispatch, no iterator, no allocation per entry. A few medians (16×16 unless noted, `BenchmarkSuite`, Intel Mac):
 
-| | 0.6 Accelerate | 0.7 Accelerate | 0.6 Swift loops | 0.7 Swift loops |
+| | 0.6 Accelerate | 1.0 Accelerate | 0.6 Swift loops | 1.0 Swift loops |
 |---|---|---|---|---|
 | generic `*` / `⋅` (64×64) | 71 ms | 16 µs | 71 ms | 187 µs |
 | `+=` (64×64) | 2 ms, 16 386 mallocs | 2.5 µs, 0 mallocs | 2 ms | 2.5 µs, 0 mallocs |
