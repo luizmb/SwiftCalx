@@ -20,7 +20,7 @@ extension AcceleratedVector: VectorState {
 
     public static func + (lhs: AcceleratedVector, rhs: AcceleratedVector) -> AcceleratedVector {
         #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
-            let n = lhs.storage.count
+            let n = Swift.min(lhs.storage.count, rhs.storage.count)
             var result = [Double](repeating: 0, count: n)
             lhs.storage.withUnsafeBufferPointer { lBuf in
                 rhs.storage.withUnsafeBufferPointer { rBuf in
@@ -33,7 +33,7 @@ extension AcceleratedVector: VectorState {
             }
             return AcceleratedVector(result)
         #else
-            return AcceleratedVector(Swift.zip(lhs.storage, rhs.storage).map(+))
+            return AcceleratedVector(lhs.storage.elementwise(rhs.storage, +))
         #endif
     }
 
@@ -51,7 +51,7 @@ extension AcceleratedVector: VectorState {
             }
             return AcceleratedVector(result)
         #else
-            return AcceleratedVector(vector.storage.map { scalar * $0 })
+            return AcceleratedVector(vector.storage.scaled(by: scalar))
         #endif
     }
 
@@ -87,7 +87,7 @@ public extension AcceleratedVector {
     static func - (lhs: AcceleratedVector, rhs: AcceleratedVector) -> AcceleratedVector {
         #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
             // vDSP_vsubD: result = b - a (note the argument order — swap to get lhs - rhs).
-            let n = lhs.storage.count
+            let n = Swift.min(lhs.storage.count, rhs.storage.count)
             var result = [Double](repeating: 0, count: n)
             lhs.storage.withUnsafeBufferPointer { lBuf in
                 rhs.storage.withUnsafeBufferPointer { rBuf in
@@ -100,8 +100,7 @@ public extension AcceleratedVector {
             }
             return AcceleratedVector(result)
         #else
-            let result: [Double] = Swift.zip(lhs.storage, rhs.storage).map { $0 - $1 }
-            return AcceleratedVector(result)
+            return AcceleratedVector(lhs.storage.elementwise(rhs.storage, -))
         #endif
     }
 

@@ -53,17 +53,38 @@ public extension RungeKutta4 {
     /// it's only here so the signature lines up with `reduce`'s `(Accumulator, Element)`.
     ///
     /// Each call returns a new array, so a fold over `n` steps copies `O(n²)` points in
-    /// total. Fine for short runs; for long ones, append to one array with
-    /// `reduce(into:)` and ``rk4(_:)`` directly.
+    /// total. Fine for short runs; for long ones use ``calculateNextPointMut(Δx:stepCalculator:)``
+    /// with `reduce(into:)`, which appends to one array.
     @inlinable
     static func calculateNextPoint<T: ℝ>(
         Δx: T,
         stepCalculator: @escaping (BidimensionalPoint<T>, T) -> T
-    ) -> ([BidimensionalPoint<T>], T) -> [BidimensionalPoint<T>] {
+    ) -> (consuming [BidimensionalPoint<T>], T) -> [BidimensionalPoint<T>] {
+        let appendNext = calculateNextPointMut(Δx: Δx, stepCalculator: stepCalculator)
+        return { (points: consuming [BidimensionalPoint<T>], x: T) in
+            var next = consume points
+            appendNext(&next, x)
+            return next
+        }
+    }
+
+    /// `reduce(into:)`-shaped twin of ``calculateNextPoint(Δx:stepCalculator:)``: appends the
+    /// next `(x + Δx, y + Δy)` point to the trajectory in place, so a fold over `n` steps is
+    /// `O(n)`. Leaves an empty trajectory empty.
+    ///
+    /// ```swift
+    /// let points = stride(from: 0.1, through: 10, by: 0.1)
+    ///     .reduce(into: [start], RungeKutta4.calculateNextPointMut(Δx: 0.1, stepCalculator: RungeKutta4.rk4(f)))
+    /// ```
+    @inlinable
+    static func calculateNextPointMut<T: ℝ>(
+        Δx: T,
+        stepCalculator: @escaping (BidimensionalPoint<T>, T) -> T
+    ) -> (inout [BidimensionalPoint<T>], T) -> Void {
         { points, _ in
-            guard let lastPoint = points.last else { return [] }
+            guard let lastPoint = points.last else { return }
             let Δy = stepCalculator(lastPoint, Δx)
-            return points + [BidimensionalPoint(x: lastPoint.x + Δx, y: lastPoint.y + Δy)]
+            points.append(BidimensionalPoint(x: lastPoint.x + Δx, y: lastPoint.y + Δy))
         }
     }
 }

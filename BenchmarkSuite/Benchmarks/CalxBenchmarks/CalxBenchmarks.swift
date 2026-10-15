@@ -1,5 +1,6 @@
 import Benchmark
 import Calculus
+import CoreFP
 import Math
 import MathOperators
 import RealNumber
@@ -135,6 +136,32 @@ let benchmarks: @Sendable () -> Void = {
         }
     }
 
+    Benchmark("Matrix.identity (64×64)", configuration: config()) { benchmark in
+        for _ in benchmark.scaledIterations {
+            blackHole(Matrix<Double>.identity(size: 64))
+        }
+    }
+
+    let u = AcceleratedVector((0 ..< 100).map(Double.init))
+    let v = AcceleratedVector((0 ..< 100).map { Double($0) * 0.5 })
+    Benchmark("AcceleratedVector.liftA2 (100 × 100)", configuration: config()) { benchmark in
+        let add = AcceleratedVector.liftA2(+)
+        for _ in benchmark.scaledIterations {
+            blackHole(add(u, v))
+        }
+    }
+    Benchmark("AcceleratedVector.cartesian (100 × 100)", configuration: config()) { benchmark in
+        for _ in benchmark.scaledIterations {
+            blackHole(AcceleratedVector.cartesian(u, v))
+        }
+    }
+    Benchmark("AcceleratedVector.foldMap (100)", configuration: config()) { benchmark in
+        let sum = AcceleratedVector.foldMap { NumericMonoid<Double>.Sum($0) }
+        for _ in benchmark.scaledIterations {
+            blackHole(sum(u))
+        }
+    }
+
     // Linear ODE dy/dt = A·y, 16 compartments.
     let derivative: @Sendable (Double, [Double]) -> [Double] = { _, y in a16.apply(to: y) }
     let accelerated: @Sendable (Double, AcceleratedVector) -> AcceleratedVector = { _, y in a16.apply(to: y) }
@@ -143,6 +170,12 @@ let benchmarks: @Sendable () -> Void = {
     Benchmark("RK4 trajectory, [Double] (16, 1 000 steps)", configuration: config()) { benchmark in
         for _ in benchmark.scaledIterations {
             blackHole(RungeKutta4.trajectory(from: y0, derivative: derivative, step: 0.01, through: 10))
+        }
+    }
+    Benchmark("RK4 fold, calculateNextState (16, 1 000 steps)", configuration: config()) { benchmark in
+        let advance = RungeKutta4.calculateNextState(Δt: 0.01, stepCalculator: RungeKutta4.rk4(derivative))
+        for _ in benchmark.scaledIterations {
+            blackHole(stride(from: 0.01, through: 10, by: 0.01).reduce([(time: 0.0, state: y0)], advance))
         }
     }
     Benchmark("RK4 trajectory, Double (1 000 steps)", configuration: config()) { benchmark in

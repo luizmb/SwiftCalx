@@ -12,7 +12,7 @@ public extension AcceleratedVector {
     ///
     /// Mirrors `Array.cartesian(_:_:)` from FP's `CoreFP/Array+Cartesian`.
     static func cartesian(_ first: AcceleratedVector, _ second: AcceleratedVector) -> [(Double, Double)] {
-        first.storage.flatMap { a in second.storage.map { b in (a, b) } }
+        cartesianProduct(first.storage, second.storage) { a, b in (a, b) }
     }
 
     /// 3-ary Cartesian product. Result length is `n × m × p`.
@@ -22,10 +22,15 @@ public extension AcceleratedVector {
         _ second: AcceleratedVector,
         _ third: AcceleratedVector
     ) -> [(Double, Double, Double)] {
-        first.storage.flatMap { a in
-            second.storage.flatMap { b in
-                third.storage.map { c in (a, b, c) }
+        var result: [(Double, Double, Double)] = []
+        result.reserveCapacity(first.count * second.count * third.count)
+        for a in first.storage {
+            for b in second.storage {
+                for c in third.storage {
+                    result.append((a, b, c))
+                }
             }
         }
+        return result
     }
 }

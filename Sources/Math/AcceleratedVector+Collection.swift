@@ -27,6 +27,12 @@ public extension AcceleratedVector {
         storage.reduce(initial, next)
     }
 
+    /// Folds into one accumulator updated in place: prefer it over ``reduce(_:_:)`` when the
+    /// result is a collection or other buffer, which the by-value form copies every step.
+    func reduce<Result>(into initial: Result, _ next: @Sendable (inout Result, Double) -> Void) -> Result {
+        storage.reduce(into: initial, next)
+    }
+
     /// Pure, non-throwing `compactMap` returning `[T]`. Shadows
     /// `Sequence.compactMap` for purity.
     func compactMap<T>(_ transform: @Sendable (Double) -> T?) -> [T] {

@@ -37,11 +37,14 @@ extension Array where Element: ℝ {
         }
     }
 
-    /// `self[i] = combine(self[i], other[i])` for the first `min(count, other.count)`
-    /// elements, in place (no allocation unless the buffer is shared).
+    /// `self[i] = combine(self[i], other[i])`, in place (no allocation unless the buffer is
+    /// shared). Like ``elementwise(_:_:)``, the result is as long as the shorter operand.
     @inlinable
     mutating func formElementwise(_ other: [Element], _ combine: (Element, Element) -> Element) {
         let length = Swift.min(count, other.count)
+        if count > length {
+            removeLast(count - length)
+        }
         withUnsafeMutableBufferPointer { lhs in
             other.withUnsafeBufferPointer { rhs in
                 for index in 0 ..< length {

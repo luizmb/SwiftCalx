@@ -43,20 +43,36 @@ public extension RungeKutta4 {
     /// Use as the closure passed to `stride(...).reduce(...)`.
     ///
     /// Each call returns a new array, so a fold over `n` steps copies `O(n²)` points in
-    /// total. For long runs use ``trajectory(from:derivative:step:through:)``, which
-    /// appends in place.
+    /// total. For long runs use ``calculateNextStateMut(Δt:stepCalculator:)`` with
+    /// `reduce(into:)`, or ``trajectory(from:derivative:step:through:)``.
     @inlinable
     static func calculateNextState<State: VectorState>(
         Δt: State.Scalar,
         stepCalculator: @escaping (State.Scalar, State, State.Scalar) -> State
     ) -> (
-        [(time: State.Scalar, state: State)],
+        consuming [(time: State.Scalar, state: State)],
         State.Scalar
     ) -> [(time: State.Scalar, state: State)] {
+        let appendNext = calculateNextStateMut(Δt: Δt, stepCalculator: stepCalculator)
+        return { (points: consuming [(time: State.Scalar, state: State)], t: State.Scalar) in
+            var next = consume points
+            appendNext(&next, t)
+            return next
+        }
+    }
+
+    /// `reduce(into:)`-shaped twin of ``calculateNextState(Δt:stepCalculator:)``: appends the
+    /// next `(time, state)` pair to the trajectory in place, so a fold over `n` steps is
+    /// `O(n)`. Leaves an empty trajectory empty.
+    @inlinable
+    static func calculateNextStateMut<State: VectorState>(
+        Δt: State.Scalar,
+        stepCalculator: @escaping (State.Scalar, State, State.Scalar) -> State
+    ) -> (inout [(time: State.Scalar, state: State)], State.Scalar) -> Void {
         { points, _ in
-            guard let last = points.last else { return [] }
+            guard let last = points.last else { return }
             let Δy = stepCalculator(last.time, last.state, Δt)
-            return points + [(time: last.time + Δt, state: last.state + Δy)]
+            points.append((time: last.time + Δt, state: last.state + Δy))
         }
     }
 }

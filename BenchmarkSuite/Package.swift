@@ -9,6 +9,7 @@ let package = Package(
     platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .watchOS(.v9)],
     dependencies: [
         .package(path: ".."),
+        .package(url: "https://github.com/luizmb/FP.git", from: "3.0.0"),
         .package(url: "https://github.com/ordo-one/benchmark", from: "1.4.0")
     ],
     targets: [
@@ -18,6 +19,7 @@ let package = Package(
                 .product(name: "Math", package: "SwiftCalx"),
                 .product(name: "Calculus", package: "SwiftCalx"),
                 .product(name: "RungeKutta", package: "SwiftCalx"),
+                .product(name: "CoreFP", package: "FP"),
                 .product(name: "Benchmark", package: "benchmark")
             ],
             path: "Benchmarks/CalxBenchmarks",
