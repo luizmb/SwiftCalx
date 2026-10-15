@@ -36,9 +36,6 @@ jobs:
       - name: Install Mint
         run: brew install mint
 
-      - name: Install Periphery
-        run: brew install peripheryapp/periphery/periphery
-
       - name: Install SwiftLint, SwiftFormat, Periphery
         run: mint bootstrap
 
@@ -55,7 +52,7 @@ jobs:
         run: swift test 2>&1
 
       - name: Periphery
-        run: periphery scan
+        run: mint run periphery scan
 
   test-macos-fallback:
     name: Build & Test (macOS / scalar fallback)
