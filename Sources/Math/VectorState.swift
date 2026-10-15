@@ -17,6 +17,8 @@ import RealNumber
 ///   vector solvers without writing the implementation twice.
 public protocol VectorState: Sendable {
     associatedtype Scalar: ℝ
+    /// Elementwise sum. Built-in vector conformers (`Array`, `AcceleratedVector`) combine
+    /// operands of different lengths like `zip`: the result is as long as the shorter one.
     static func + (lhs: Self, rhs: Self) -> Self
     static func * (scalar: Scalar, state: Self) -> Self
 
@@ -37,6 +39,7 @@ public extension VectorState {
 extension Array: VectorState where Element: ℝ {
     public typealias Scalar = Element
 
+    /// Elementwise sum. Like `zip`, the result is as long as the shorter operand.
     @inlinable
     public static func + (lhs: [Element], rhs: [Element]) -> [Element] {
         lhs.elementwise(rhs, +)

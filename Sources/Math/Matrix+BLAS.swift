@@ -223,10 +223,12 @@
 #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
 
     public extension Matrix where Scalar == Double {
+        /// Elementwise sum through `vDSP_vaddD`. Same contract as the generic `+` (shapes aren't checked).
         static func + (lhs: Matrix, rhs: Matrix) -> Matrix {
             elementwise(lhs, rhs, vDSP_vaddD)
         }
 
+        /// Elementwise difference through `vDSP_vsubD`. Same contract as the generic `-`.
         static func - (lhs: Matrix, rhs: Matrix) -> Matrix {
             elementwise(lhs, rhs) { aPtr, _, bPtr, _, cPtr, _, n in
                 // vDSP_vsubD computes (b - a), so swap arguments to get (a - b).
@@ -275,10 +277,12 @@
     }
 
     public extension Matrix where Scalar == Float {
+        /// Elementwise sum through `vDSP_vadd`. Same contract as the generic `+` (shapes aren't checked).
         static func + (lhs: Matrix, rhs: Matrix) -> Matrix {
             elementwise(lhs, rhs, vDSP_vadd)
         }
 
+        /// Elementwise difference through `vDSP_vsub`. Same contract as the generic `-`.
         static func - (lhs: Matrix, rhs: Matrix) -> Matrix {
             elementwise(lhs, rhs) { aPtr, _, bPtr, _, cPtr, _, n in
                 // vDSP_vsub computes (b - a), so swap arguments.
