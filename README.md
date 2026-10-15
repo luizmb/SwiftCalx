@@ -165,12 +165,15 @@ public protocol VectorState: Sendable {
     associatedtype Scalar: ℝ
     static func + (lhs: Self, rhs: Self) -> Self
     static func * (scalar: Scalar, state: Self) -> Self
+    mutating func add(_ other: Self, scaledBy scalar: Scalar)   // self = self + scalar * other
 }
 ```
 
+`add(_:scaledBy:)` is the step every Runge-Kutta stage repeats. It has a default implementation through the two operators, so a conformer only has to write `+` and `*`; `Array` and `AcceleratedVector` override it to write into their own buffer instead of building two new states.
+
 Built-in conformances:
 
-- **`Array<Element>`** where `Element: ℝ` — element-wise addition, element-wise scalar multiplication. The natural way to spell an n-dimensional state vector.
+- **`Array<Element>`** where `Element: ℝ` — element-wise addition, element-wise scalar multiplication. The natural way to spell an n-dimensional state vector. Adding arrays of different lengths behaves like `zip`: the result (or, for `add`, the updated array) is as long as the shorter one. The same holds for `AcceleratedVector` and its `⋅` dot product.
 - **`Double`, `Float`, `Decimal`, `Float16`, `Float80`** — every concrete ℝ type is its own one-dimensional vector space, with `Scalar == Self`. This lets the same algorithm code drive both scalar and vector solvers.
 
 In math language, `VectorState` describes a *vector space over the scalar ring* — but you don't need to know that to use it. Just think: "states I can add and stretch".
@@ -319,7 +322,7 @@ Matrix.multiply(A, B, into: &buffer)
 
 `+=`, `-=` and `*=` by a scalar write into the left-hand matrix's own storage, so they allocate nothing unless that storage is shared with another value (then the first write copies it once, like any Swift value). `Matrix.multiply(_:_:into:)` is for loops that multiply over and over: keep two matrices, alternate between them, and only the first products allocate. `squared(times:)` and the Taylor exponential are written that way.
 
-The `⋅` operator (the DOT OPERATOR character, U+22C5) is from `MathOperators`. It's overloaded for `Matrix ⋅ Matrix`, `Matrix ⋅ Vector` (i.e. `[Scalar]`), and `Scalar ⋅ Matrix`. Named-function equivalents (`A.applied(to: vector)`, `A * B`) are also available for projects that don't want the operator.
+The `⋅` operator (the DOT OPERATOR character, U+22C5) is from `MathOperators`. It's overloaded for `Matrix ⋅ Matrix`, `Matrix ⋅ Vector` (i.e. `[Scalar]`), and `Scalar ⋅ Matrix`. Named-function equivalents (`A.apply(to: vector)`, `A * B`) are also available for projects that don't want the operator.
 
 ### Matrix optics — editing entries in place
 
@@ -411,7 +414,7 @@ Run `swift package benchmark` in `BenchmarkSuite/` to measure on your machine.
 
 If you need `A^n` for some large `n`, the naive approach `A * A * A * ... * A` (n multiplications) is wasteful. **Repeated squaring** uses the identity `A^(2^k) = ((((A^2)^2)^2)…^2)` — `k` multiplications instead of `2^k`. For `n = 1024`, that's 10 multiplications vs 1024.
 
-The library uses this internally for the Taylor exponential of matrices (see below) and the dosimetry consumer's [Birchall algorithm](https://github.com/luizmb/MultiCompartmentModel) uses it to compute `e^A` via scaling-and-squaring.
+The library uses this internally for the Taylor exponential of matrices (see below) and the dosimetry consumer's [Birchall algorithm](https://github.com/luizmb/biokinetics-dosimetry/blob/main/Sources/Solver/Birchall.swift) uses it to compute `e^A` via scaling-and-squaring.
 
 **Use cases**: linear algebra, graphics (transformation matrices), Markov chains (state-transition matrices), ODE systems with constant coefficients (matrix exponential), least-squares regression (normal equations).
 
@@ -657,7 +660,7 @@ let expA = Taylor.exponential(of: A, tolerance: 1e-10)
 
 If `A` has large entries, the partial sums grow huge before the `n!` denominator catches up, and floating-point cancellation destroys accuracy. The standard fix is **scaling and squaring**: divide `A` by `2^k` large enough that `A / 2^k` has small entries; compute the Taylor series of the scaled matrix safely; then square the result `k` times to recover `e^A = (e^(A/2^k))^(2^k)`.
 
-The scaling-and-squaring assembly lives in the dosimetry consumer ([`MultiCompartmentModel`](https://github.com/luizmb/MultiCompartmentModel), look for `Birchall.swift`) because Birchall 1986 published the specific scaling threshold for compartmental dosimetry models. The generic building blocks (`Taylor.exponential` and `Matrix.squared(times:)`) stay here. If a non-Birchall variant (Padé approximant, Moler & Van Loan algorithm 11) is ever needed in pure linear algebra, it lands in SwiftCalx under its own namespace.
+The scaling-and-squaring assembly lives in the dosimetry consumer ([`biokinetics-dosimetry`](https://github.com/luizmb/biokinetics-dosimetry), in `Sources/Solver/Birchall.swift`) because Birchall 1986 published the specific scaling threshold for compartmental dosimetry models. The generic building blocks (`Taylor.exponential` and `Matrix.squared(times:)`) stay here. If a non-Birchall variant (Padé approximant, Moler & Van Loan algorithm 11) is ever needed in pure linear algebra, it lands in SwiftCalx under its own namespace.
 
 **Use cases**: solving any linear ODE system analytically — coupled spring-mass systems, RC circuits, biokinetic compartmental models, predator-prey systems linearised around equilibrium.
 
@@ -845,14 +848,14 @@ let first10 = Array(fib.prefix(10))
 
 ## Operators
 
-All operators are in the `MathOperators` module, which most products pull in by default. The convention is **named function first, operator as ergonomic alias second** — there's always a long-form way to spell anything operators do, so you can opt out of custom operators (use `MathNoOperators` / `CalculusNoOperators`) if your project prefers strict standardness.
+SwiftCalx's own operators are in the `MathOperators` module, which most products pull in by default. `≅` and `±` come from FP's `CoreFPOperators` (add `import CoreFPOperators` to use them). The convention is **named function first, operator as ergonomic alias second** — there's always a long-form way to spell anything operators do, so you can opt out of custom operators (use `MathNoOperators` / `CalculusNoOperators`) if your project prefers strict standardness.
 
 | Operator | Type | Meaning | Named equivalent |
 |---|---|---|---|
-| `⋅` | infix, `Matrix * Matrix`, `Matrix * Vector`, `Scalar * Matrix` | Matrix product, matrix-vector product, scalar-matrix product. The character is U+22C5 DOT OPERATOR (not period). | `A.applied(to: vector)`, `A * B`, `scalar * A` |
-| `≅` | infix `(Scalar, Range<Scalar>) -> Bool` | Approximate equality — `value ≅ (a..<b)` checks if `value` lies inside `[a, b)`. Useful for "did the algorithm converge close enough to the expected value?". | `value.within(range)` |
-| `±` | infix `(Scalar, Scalar) -> Range<Scalar>` | `value ± delta` constructs the symmetric range `[value − delta, value + delta]`. From FP: `5.0 ± 0.1 == 4.9..<5.1`. | `value.symmetricRange(delta)` |
-| `+/-` | infix `(Scalar, Scalar) -> Range<Scalar>` | ASCII alias for `±` (for keyboards without easy `±`). | Same as `±`. |
+| `⋅` | infix, `Matrix * Matrix`, `Matrix * Vector`, `Scalar * Matrix` | Matrix product, matrix-vector product, scalar-matrix product. The character is U+22C5 DOT OPERATOR (not period). | `A.apply(to: vector)`, `A * B`, `scalar * A` |
+| `≅` | infix `(T, range) -> Bool`, any range type | Range membership, flipped: `value ≅ range` is `range ~= value`. With `±` it reads as a tolerance check: `result ≅ 2.718 ± 1e-3` ("did the algorithm converge close enough?"). From FP. | `rangeMatch(value, in: range)` |
+| `±` | infix `(T, T.Stride) -> ClosedRange<T>` | `value ± delta` builds the closed range `[value − delta, value + delta]` (the sign of `delta` is ignored): `5.0 ± 0.5 == 4.5...5.5`. From FP. | `symmetricRange(value, delta: delta)` |
+| `+/-` | infix `(T, T.Stride) -> ClosedRange<T>` | ASCII alias for `±` (for keyboards without easy `±`). From FP. | Same as `±`. |
 | `√` | prefix `(Scalar) -> Scalar` | Square root. `√4.0 == 2.0`. | `value.squareRoot()` |
 | `∛` | prefix `(Scalar) -> Scalar` | Cube root. `∛8.0 == 2.0`. | `value.cubeRoot()` |
 | `^^` | infix `(Scalar, Scalar) -> Scalar` | Exponentiation. `2.0 ^^ 3.0 == 8.0`. Note: not `^` (which is bitwise XOR in Swift) and not `**` (Python). | `base.raisedToThePower(of: exponent)` |
@@ -928,15 +931,15 @@ What this means in practice: you can freely use SwiftCalx values across `Task`s,
 | tvOS | 13.0 |
 | watchOS | 6.0 |
 
-Linux builds (no Combine dependency in this library; FP's Combine-touching surface is gated to Apple platforms via `#if canImport(Combine)`).
+Linux, Windows and Android build and pass the test suite in CI. The library uses no Apple-only API outside the `#if canImport(Accelerate)` fast paths, which fall back to portable Swift loops everywhere else.
 
-Swift 5.10 toolchain or later. Swift 6 strict concurrency mode is supported (the library is Sendable-clean throughout).
+Swift 6.3 toolchain or later. The library builds in Swift 6 language mode with strict concurrency (it's Sendable-clean throughout).
 
 ---
 
 ## Roadmap
 
-See [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) for the full snapshot. Headline pending items:
+See [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) for what's done and what's pending. Headline pending items:
 
 - **Split into separate repos** (eventually) — `Math`, `MathOperators`, `Calculus`, `RungeKutta`, `SwiftCalx` (umbrella) as independent packages, so consumers pull only what they need.
 - **Dormand-Prince 5th-order continuous extension** — match the integrator's accuracy floor on `RungeKutta45` dense output (currently cubic Hermite, `O(h⁴)`). Defer until a use case needs the extra order; for biokinetic and most engineering ODEs the existing interpolant is comfortable.
@@ -971,7 +974,7 @@ The canonical references for the algorithms shipped here:
 
 **Matrix exponentials**:
 - Moler, C. & Van Loan, C. (2003). *Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later*. SIAM Review 45(1): 3–49.
-- Birchall, A. (1986). *A microcomputer algorithm for solving compartmental models involving radionuclide transformations*. Health Physics 50(3): 389–397. (For the dosimetry scaling-and-squaring assembly that lives in the MCM consumer.)
+- Birchall, A. (1986). *A microcomputer algorithm for solving compartmental models involving radionuclide transformations*. Health Physics 50(3): 389–397. (For the dosimetry scaling-and-squaring assembly that lives in the biokinetics-dosimetry consumer.)
 - [Wikipedia — Matrix exponential](https://en.wikipedia.org/wiki/Matrix_exponential).
 
 **Simpson's rule**:

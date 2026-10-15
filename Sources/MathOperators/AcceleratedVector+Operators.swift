@@ -29,7 +29,8 @@ public func ⋅ (scalar: Double, vector: AcceleratedVector) -> AcceleratedVector
 /// AcceleratedVector-vector dot product: `Σ u_i · v_i`. Returns a single `Double`.
 /// On Apple, routes through `cblas_ddot` (Accelerate's BLAS Level 1 dot
 /// kernel — SIMD, register-tuned per chip). Falls back to a scalar
-/// `zip + reduce` on non-Apple builds or `-D SWIFTCALX_NO_ACCELERATE`.
+/// `zip + reduce` on non-Apple builds or `-D SWIFTCALX_NO_ACCELERATE`. Like `zip`, vectors
+/// of different lengths are summed over the shorter one's components.
 public func ⋅ (lhs: AcceleratedVector, rhs: AcceleratedVector) -> Double {
     #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
         let n = Int32(Swift.min(lhs.storage.count, rhs.storage.count))

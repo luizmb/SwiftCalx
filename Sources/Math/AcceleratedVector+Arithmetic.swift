@@ -18,6 +18,8 @@ import RealNumber
 extension AcceleratedVector: VectorState {
     public typealias Scalar = Double
 
+    /// Elementwise sum (`vDSP_vaddD` on Apple). Like `zip`, the result is as long as the
+    /// shorter operand.
     public static func + (lhs: AcceleratedVector, rhs: AcceleratedVector) -> AcceleratedVector {
         #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
             let n = Swift.min(lhs.storage.count, rhs.storage.count)
@@ -84,6 +86,8 @@ extension AcceleratedVector: NormedVectorState {
 // MARK: - Additional ergonomic arithmetic (subtraction + in-place forms)
 
 public extension AcceleratedVector {
+    /// Elementwise difference (`vDSP_vsubD` on Apple). Like `zip`, the result is as long as
+    /// the shorter operand.
     static func - (lhs: AcceleratedVector, rhs: AcceleratedVector) -> AcceleratedVector {
         #if canImport(Accelerate) && !SWIFTCALX_NO_ACCELERATE
             // vDSP_vsubD: result = b - a (note the argument order — swap to get lhs - rhs).
@@ -105,6 +109,7 @@ public extension AcceleratedVector {
     }
 
     // The compound forms write into `lhs`'s storage (no allocation unless it's shared).
+    // `+=` / `-=` keep the first `min(lhs.count, rhs.count)` components, like `+` / `-`.
     static func += (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs.storage.formElementwise(rhs.storage, +) }
     static func -= (lhs: inout AcceleratedVector, rhs: AcceleratedVector) { lhs.storage.formElementwise(rhs.storage, -) }
     static func *= (lhs: inout AcceleratedVector, scalar: Double) { lhs.storage.formScaled(by: scalar) }

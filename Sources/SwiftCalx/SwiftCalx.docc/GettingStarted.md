@@ -48,16 +48,43 @@ or use any type conforming to `VectorState`.
 
 ## Numerical derivatives
 
-The `Calculus` module differentiates a function numerically:
+The `Calculus` module differentiates a function numerically. Pair the function with a
+`DerivativeMethod` (which finite-difference stencil, and how to pick the step `h`):
 
 ```swift
 import Calculus
 
-// See ``Calculus`` for the derivative and Taylor-series APIs.
+let f = Fn<Double> { x in x * x * x }   // f(x) = x³, so f'(x) = 3x²
+let df = DerivativeFunction(
+    underlyingFunction: f,
+    method: .CentralStencil.fivePoint(order: 1, step: .adaptative)
+)
+
+df(x: 2.0)              // ≈ 12
+df.slopeFunction(3.0)   // ≈ 27
+```
+
+## Matrices and in-place updates
+
+`Matrix` is a row-major matrix over any real scalar. On Apple platforms `Double` and `Float`
+products go through Accelerate; elsewhere they run as specialised Swift loops. The compound
+operators and the optics write into the matrix's own buffer, so a loop that updates a matrix
+allocates nothing:
+
+```swift
+import CoreFP
+import Math
+
+var a = Matrix<Double>(rows: 2, columns: 2, storage: [1, 2, 3, 4])
+a += Matrix<Double>.identity(size: 2)                  // in place
+Matrix<Double>.diagonal.modifyMut(&a) { $0 *= 0.5 }   // in place, diagonal only
+
+var product = Matrix<Double>.zero(size: 2)
+Matrix.multiply(a, a, into: &product)                  // reuses `product`'s buffer
 ```
 
 ## Next steps
 
-- **Math** — vector states, matrices, weighted averages
+- **Math** — vector states, matrices, matrix optics, weighted averages
 - **RungeKutta** — RK4 and adaptive RK45 solvers
 - **RealNumber** — the `ℝ` protocol and its conformances

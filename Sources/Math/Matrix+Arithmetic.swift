@@ -11,7 +11,9 @@ import RealNumber
 public extension Matrix {
     /// Elementwise sum. `(A + B)[i, j] = A[i, j] + B[i, j]`.
     ///
-    /// Both matrices must have the same shape; the result inherits that shape.
+    /// Both matrices must have the same shape; the result inherits that shape. Shapes aren't
+    /// checked (nothing traps): with mismatched shapes the result keeps `lhs`'s shape over
+    /// `min` of the two entry counts, which isn't a meaningful matrix. Check shapes first.
     @inlinable
     static func + (lhs: Matrix, rhs: Matrix) -> Matrix {
         Matrix(rows: lhs.rows, columns: lhs.columns, storage: lhs.entries.elementwise(rhs.entries, +))
@@ -26,7 +28,8 @@ public extension Matrix {
 
     /// Elementwise difference. `(A − B)[i, j] = A[i, j] − B[i, j]`.
     ///
-    /// Both matrices must have the same shape; the result inherits that shape.
+    /// Both matrices must have the same shape; the result inherits that shape. Shapes aren't
+    /// checked: see `+`.
     @inlinable
     static func - (lhs: Matrix, rhs: Matrix) -> Matrix {
         Matrix(rows: lhs.rows, columns: lhs.columns, storage: lhs.entries.elementwise(rhs.entries, -))
