@@ -98,33 +98,36 @@ final class RungeKutta45HermiteTests: XCTestCase {
     /// Cubic Hermite is C¹-continuous across adjacent segments that share an
     /// endpoint state and slope. Interpolating just-below and just-above a
     /// segment join should produce values that bracket the join's value.
-    func testCubicHermiteIsContinuousAtSegmentJoin() {
+    func testCubicHermiteIsContinuousAtSegmentJoin() throws {
         let dydt: @Sendable (Double, Double) -> Double = { _, y in -0.5 * y }
-        let segments = RungeKutta45.denseSegments(
+        let segmentsResult = RungeKutta45.denseSegments(
             from: 1.0,
             derivative: dydt,
             startingAt: 0,
             through: 10,
             tolerance: 1e-9
         )
+        let segments = try segmentsResult.get()
         // Pick a segment boundary in the middle of the trajectory.
         guard segments.count >= 3 else {
             XCTFail("expected at least 3 accepted segments to test continuity")
             return
         }
         let join = segments[segments.count / 2].startTime
-        let before = RungeKutta45.trajectory(
+        let beforeResult = RungeKutta45.trajectory(
             at: [join - 1e-9],
             from: 1.0,
             derivative: dydt,
             tolerance: 1e-9
-        )[0]
-        let after = RungeKutta45.trajectory(
+        )
+        let before = try beforeResult.get()[0]
+        let afterResult = RungeKutta45.trajectory(
             at: [join + 1e-9],
             from: 1.0,
             derivative: dydt,
             tolerance: 1e-9
-        )[0]
+        )
+        let after = try afterResult.get()[0]
         XCTAssertEqual(before, after, accuracy: 1e-7)
     }
 }
