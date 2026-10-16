@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `RungeKutta4.propagator(of:step:)` and `RungeKutta4.linearTrajectory(of:from:step:stepsPerSample:count:)`:
+  RK4 on a linear, time-invariant system `dy/dt = A·y` as its propagator
+  `P = I + hA + … + (hA)⁴/24`, raised once to the steps between samples and walked with one
+  matrix-vector product per sample. Same method and truncation error as stepping it (tests pin
+  it to `trajectory` on random compartment-like systems).
+- `Matrix.raised(to:)`: integer power by repeated squaring, alternating buffers.
+- `RungeKutta45.Failure` (`.stepLimit(reached:steps:)`, `.stepUnderflow(at:step:)`).
+
+### Changed (breaking)
+- `RungeKutta45.trajectory(at:…)` returns `Result<[State], RungeKutta45.Failure>` and
+  `denseSegments(…)` returns `Result<[Segment<State>], RungeKutta45.Failure>`. They used to stop
+  silently when `maxIterations` ran out (or the step fell below `minStep`) and answer every later
+  output time with the last state reached: on a stiff 19-compartment model over 1 000 days the
+  default budget ran out at day 836 and the last 165 days were a flat copy, 2.9e-4 off at a
+  requested tolerance of 1e-10. Callers add `.get()` or switch on the result. The integration
+  runs to `max(outputTimes)` (was `outputTimes.last`), as documented.
+
+## [1.0.0] - 2026-10-15
+
+### Added
 - `VectorState.add(_:scaledBy:)`: `self = self + scalar * other` in place. Default implementation
   through the operators, so existing conformers keep compiling; `Array` and `AcceleratedVector`
   write into their buffer.
