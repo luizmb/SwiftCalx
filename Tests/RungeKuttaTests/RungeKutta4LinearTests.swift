@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import DataStructure
 import Math
 import RungeKutta
 import Testing
@@ -7,22 +8,10 @@ import Testing
 // The propagator is RK4 on `dy/dt = A·y`, not an approximation of it: stepping `rk4` with that
 // derivative has to land on the same states, up to rounding, for any constant `A`.
 
-/// A small deterministic generator, so the systems are random but the test is reproducible.
-private struct SplitMix64: RandomNumberGenerator {
-    var state: UInt64
-    mutating func next() -> UInt64 {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
-    }
-}
-
 /// A compartment-like matrix: non-negative transfers off the diagonal, each column's outflow (plus
 /// a decay) on the diagonal, so the system is stable, as biokinetic models are.
 private func compartmental(size n: Int, seed: UInt64) -> Matrix<Double> {
-    var rng = SplitMix64(state: seed)
+    var rng = SplitMix64(seed: seed)
     var entries = [Double](repeating: 0, count: n * n)
     for from in 0 ..< n {
         for to in 0 ..< n where to != from {
