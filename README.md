@@ -320,7 +320,7 @@ var buffer = Matrix<Double>.zero(size: 2)
 Matrix.multiply(A, B, into: &buffer)
 ```
 
-`+=`, `-=` and `*=` by a scalar write into the left-hand matrix's own storage, so they allocate nothing unless that storage is shared with another value (then the first write copies it once, like any Swift value). `Matrix.multiply(_:_:into:)` is for loops that multiply over and over: keep two matrices, alternate between them, and only the first products allocate. `squared(times:)` and the Taylor exponential are written that way.
+`+=`, `-=` and `*=` by a scalar write into the left-hand matrix's own storage, so they allocate nothing unless that storage is shared with another value (then the first write copies it once, like any Swift value). `Matrix.multiply(_:_:into:)` is for loops that multiply over and over: keep two matrices, alternate between them, and only the first products allocate. `squared(times:)`, `raised(to:)` (any power, by repeated squaring) and the Taylor exponential are written that way.
 
 The `⋅` operator (the DOT OPERATOR character, U+22C5) is from `MathOperators`. It's overloaded for `Matrix ⋅ Matrix`, `Matrix ⋅ Vector` (i.e. `[Scalar]`), and `Scalar ⋅ Matrix`. Named-function equivalents (`A.apply(to: vector)`, `A * B`) are also available for projects that don't want the operator.
 
@@ -733,6 +733,16 @@ let trajectory = RungeKutta4.trajectory(
 
 **When to use it**: smooth ODEs where you know a step size that works (or you don't care about being optimal). Deterministic output cadence is helpful for plotting and snapshotting.
 
+**Linear systems** (`dy⃗/dt = A·y⃗`, `A` constant, no source term): one RK4 step is exactly one matrix product, `y⃗ ↦ P·y⃗` with `P = I + hA + (hA)²/2 + (hA)³/6 + (hA)⁴/24`. `RungeKutta4.propagator(of:step:)` builds `P`, and `linearTrajectory` raises it to the steps between samples once, then walks one matrix-vector product per sample:
+
+```swift
+// 100 days at h = 0.01, one sample per day: P^100 once, then 100 mat-vecs.
+let daily = RungeKutta4.linearTrajectory(of: A, from: y0, step: 0.01, stepsPerSample: 100, count: 100)
+// daily: [[Double]] — y0, y(1), …, y(100)
+```
+
+Same method, same truncation error, same stability region as stepping it; only the rounding order differs (a 19-compartment model over 100 days: within 7e-15 of the stepped trajectory, 300× faster). It doesn't apply once `A` depends on time or state, or the system has a source term `b(t)`: step those with `trajectory`.
+
 **Read more**: Butcher, *Numerical Methods for Ordinary Differential Equations* (Wiley, 2016), §2.4. Press et al., *Numerical Recipes*, §17.1. [Wikipedia — Runge-Kutta methods](https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods).
 
 ### RungeKutta45 — Dormand-Prince adaptive solver
@@ -766,11 +776,17 @@ let values = RungeKutta45.trajectory(
     derivative: { _, y in [y[1], -4 * y[0]] },          // ω² = 4
     tolerance: 1e-8
 )
-// values: [State]  — one entry per requested time, interpolated from the
-//                   adaptive trajectory the integrator chose internally.
+// values: Result<[State], RungeKutta45.Failure> — on success one entry per
+//         requested time, interpolated from the adaptive trajectory the
+//         integrator chose internally.
 ```
 
-Requesting a time before `startingAt` returns the initial state; requesting one past the integrated range returns the last computed state. Empty input returns `[]`.
+Requesting a time before `startingAt` returns the initial state. Empty input returns `[]`. The integration can stop short of the last requested time in two ways, and both are a `.failure` rather than states made up for times it never reached:
+
+- `.stepLimit(reached:steps:)`: the `maxIterations` budget (accepted + rejected steps, default 10 000) ran out.
+- `.stepUnderflow(at:step:)`: the controller wanted a step below `minStep`.
+
+**Size the budget to the problem.** On a stiff system an explicit method is held near its stability limit, `h ≈ 3.3 / |λ_max|` for Dormand–Prince, whatever the tolerance asks for: a 19-compartment biokinetic model whose fastest rate is 35/day takes ~12 steps per day at any tolerance from `1e-6` to `1e-14`, so 1 000 days need ~12 000 steps. A bound on `|λ_max|` comes straight from the matrix (the largest row sum of `|aᵢⱼ|`), so `days × bound / 3.3` with a safety factor is a budget that grows with the span. Because those steps are set by stability, a tight tolerance is nearly free there (`1e-14` cost 10% more steps than `1e-6`).
 
 The integrator's own adaptive samples are still reachable when you need them — typically for diagnostics or plotting the raw steps the integrator chose:
 
@@ -781,8 +797,8 @@ let segments = RungeKutta45.denseSegments(
     through: 10,
     tolerance: 1e-8
 )
-// segments: [RungeKutta45.Segment]  — startTime, endTime, startState, endState,
-//                                     startSlope, endSlope per accepted step.
+// segments: Result<[RungeKutta45.Segment], RungeKutta45.Failure> — startTime, endTime,
+//           startState, endState, startSlope, endSlope per accepted step.
 // Use RungeKutta45.cubicHermite(at:on:) to interpolate inside one segment.
 ```
 
@@ -804,7 +820,7 @@ Both can deliver state at any output time you ask for (RK4 directly via its fixe
 | Predictable cost per output sample matters more than adaptivity | `RungeKutta4` |
 | Don't want to think about step size; want the integrator to manage it | `RungeKutta45` |
 | Smooth long integration with mixed timescales (some intervals smooth, some rapid) | `RungeKutta45` |
-| Linear ODE with constant coefficients (`dy⃗/dt = A·y⃗`) | **Neither — use the matrix exponential** via `Taylor.exponential` or a scaling-and-squaring variant. It's exact. For trajectory walks, [`Matrix.actions(on:count:)`](#iterated-action--applying-a-matrix-many-times) is the cheap form. |
+| Linear ODE with constant coefficients (`dy⃗/dt = A·y⃗`) | **The matrix exponential** via `Taylor.exponential` or a scaling-and-squaring variant: it's exact. For trajectory walks, [`Matrix.actions(on:count:)`](#iterated-action--applying-a-matrix-many-times) is the cheap form. When it has to be RK4 (cross-checking, matching a reference implementation), `RungeKutta4.linearTrajectory` is the same method at mat-vec cost. |
 | Stiff ODE (eigenvalues of Jacobian differ by orders of magnitude) | **Neither** — explicit RK needs tiny steps for stability, not accuracy. Use an implicit method (BDF / Rosenbrock / implicit RK5). Not yet shipped; see [Roadmap](#roadmap). |
 
 ### SimpsonWeightedAverage — the weighting underneath

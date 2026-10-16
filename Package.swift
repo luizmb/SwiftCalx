@@ -57,6 +57,6 @@ let package = Package(
         .testTarget(name: "MathOperatorsTests", dependencies: ["MathOperators"]),
         .testTarget(name: "MathTests", dependencies: ["Math", "MathOperators"]),
         .testTarget(name: "RealNumberTests", dependencies: ["RealNumber"]),
-        .testTarget(name: "RungeKuttaTests", dependencies: ["RungeKutta"])
+        .testTarget(name: "RungeKuttaTests", dependencies: ["RungeKutta", .product(name: "DataStructure", package: "FP")])
     ]
 )

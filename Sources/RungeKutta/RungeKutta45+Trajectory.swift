@@ -24,18 +24,23 @@ extension RungeKutta45 {
     /// - Parameters:
     ///   - outputTimes: times at which to return state. Should be sorted
     ///     ascending. The integrator runs from `startingAt` to
-    ///     `max(outputTimes)`. Times before `startingAt` return `initialState`;
-    ///     times after the integrated range return the last computed state.
+    ///     `max(outputTimes)`. Times before `startingAt` return `initialState`.
     ///     Empty input returns `[]`.
     ///   - initialState: `y(startingAt)`.
     ///   - derivative: `f(t, y)`. Required `@Sendable`.
     ///   - startingAt: `t₀` — the initial time. Defaults to `0`.
-    ///   - tolerance: target infinity-norm of `y5 − y4` per step.
+    ///   - tolerance: target infinity-norm of `y5 − y4` per step: an absolute bound on each
+    ///     step's local error estimate, with no relative part, so it suits states whose entries
+    ///     share one scale (fractions of a whole, say).
     ///   - initialStep: starting `h`. Defaults to `(t_end − startingAt) / 100`.
-    ///   - minStep: smallest step the integrator will try before bailing.
+    ///   - minStep: smallest step the integrator will try; below it, ``Failure/stepUnderflow(at:step:)``.
     ///   - maxStep: largest step the integrator will take. Defaults to the
     ///     full span — let RK45 take big strides when the dynamics allow.
-    ///   - maxIterations: safety bound on total accepted + rejected steps.
+    ///   - maxIterations: budget of accepted + rejected steps. Size it to the problem: an explicit
+    ///     method on a stiff system is held near its stability limit (`h ≈ 3.3 / |λ_max|` for
+    ///     Dormand–Prince), so the steps it needs grow with the span times the fastest rate.
+    /// - Returns: the state at each output time, or ``Failure`` when the integration can't reach
+    ///   `max(outputTimes)`. It never returns a state for a time it didn't integrate to.
     @inlinable
     public static func trajectory<State: NormedVectorState>(
         at outputTimes: [Double],
@@ -47,12 +52,12 @@ extension RungeKutta45 {
         minStep: Double? = nil,
         maxStep: Double? = nil,
         maxIterations: Int = 10_000
-    ) -> [State] where State.Scalar == Double, State: Sendable {
-        guard let tEnd = outputTimes.last, tEnd >= t0 else {
-            return outputTimes.map { _ in initialState }
+    ) -> Result<[State], Failure> where State.Scalar == Double, State: Sendable {
+        guard let tEnd = outputTimes.max(), tEnd >= t0 else {
+            return .success(outputTimes.map { _ in initialState })
         }
 
-        let segments = denseSegments(
+        return denseSegments(
             from: initialState,
             derivative: derivative,
             startingAt: t0,
@@ -62,15 +67,18 @@ extension RungeKutta45 {
             minStep: minStep,
             maxStep: maxStep,
             maxIterations: maxIterations
-        )
-
-        return outputTimes.map { interpolate(at: $0, segments: segments, initialState: initialState) }
+        ).map { segments in
+            outputTimes.map { interpolate(at: $0, segments: segments, initialState: initialState) }
+        }
     }
 
     /// Walks the adaptive RK45 trajectory from `t0` to `t1` and returns every
     /// accepted segment with both endpoint slopes attached. Exposed publicly
     /// because some callers (e.g. diagnostic tooling) want the integrator's
     /// own time grid, not interpolated values.
+    ///
+    /// Takes the same parameters as ``trajectory(at:from:derivative:startingAt:tolerance:initialStep:minStep:maxStep:maxIterations:)``.
+    /// Fails with ``Failure`` rather than returning segments that stop short of `t1`.
     @inlinable
     public static func denseSegments<State: NormedVectorState>(
         from initialState: State,
@@ -82,8 +90,8 @@ extension RungeKutta45 {
         minStep: Double? = nil,
         maxStep: Double? = nil,
         maxIterations: Int = 10_000
-    ) -> [Segment<State>] where State.Scalar == Double, State: Sendable {
-        guard t1 > t0 else { return [] }
+    ) -> Result<[Segment<State>], Failure> where State.Scalar == Double, State: Sendable {
+        guard t1 > t0 else { return .success([]) }
 
         let totalSpan = t1 - t0
         var h = initialStep ?? totalSpan / 100
@@ -122,13 +130,13 @@ extension RungeKutta45 {
                 let factor = stepSizeFactor(errorNorm: attempt.errorNorm, tolerance: tolerance)
                 let newH = max(hFloor, h * factor)
                 if newH <= hFloor, h <= hFloor {
-                    return segments
+                    return .failure(.stepUnderflow(at: t, step: h))
                 }
                 h = newH
             }
         }
 
-        return segments
+        return t < t1 ? .failure(.stepLimit(reached: t, steps: iterations)) : .success(segments)
     }
 
     /// Cubic-Hermite interpolation at `t` against `segments`. Returns

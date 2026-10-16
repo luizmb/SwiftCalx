@@ -37,14 +37,14 @@ import RealNumber
 ///
 /// ```swift
 /// // Before — [Double] state, scalar per-stage ops
-/// let trajectory = RungeKutta45.trajectory(
+/// let trajectory = RungeKutta45.trajectory(   // Result<[[Double]], RungeKutta45.Failure>
 ///     at: outputTimes,
 ///     from: [1.0, 0.0],
 ///     derivative: { _, y in A.apply(to: y) }
 /// )
 ///
 /// // After — AcceleratedVector state, vDSP per-stage ops
-/// let trajectory = RungeKutta45.trajectory(
+/// let trajectory = RungeKutta45.trajectory(   // Result<[AcceleratedVector], RungeKutta45.Failure>
 ///     at: outputTimes,
 ///     from: [1.0, 0.0].asAcceleratedVector,
 ///     derivative: { _, y in A.apply(to: y) }   // returns AcceleratedVector via the bridge overload
