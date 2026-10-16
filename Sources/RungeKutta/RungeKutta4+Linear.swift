@@ -13,15 +13,27 @@ public extension RungeKutta4 {
     /// P = I + hA + (hA)²/2 + (hA)³/6 + (hA)⁴/24
     /// ```
     ///
-    /// RK4's stability polynomial evaluated at `hA` (built here in Horner form). Not an
-    /// approximation of RK4: the same method, with the same truncation error and stability
-    /// region; only the rounding order differs. It holds only when `A` is constant and the
-    /// system has no source term; for `dy/dt = A(t)·y`, `A·y + b(t)` or anything nonlinear, step
-    /// with ``trajectory(from:derivative:step:through:)``.
+    /// RK4's stability polynomial evaluated at `hA`. Not an approximation of RK4: the same
+    /// method, with the same truncation error and stability region; only the rounding order
+    /// differs. It holds only when `A` is constant and the system has no source term; for
+    /// `dy/dt = A(t)·y`, `A·y + b(t)` or anything nonlinear, step with
+    /// ``trajectory(from:derivative:step:through:)``.
+    ///
+    /// Built in Horner form, `P = I + hA·(I + (h/2)A·(I + (h/3)A·(I + (h/4)A)))`, innermost first:
+    /// each round is `next = A · current`, scaled and shifted by `I` in place, into two buffers
+    /// that alternate, so the whole polynomial allocates three matrices whatever the size.
     @inlinable
     static func propagator<Scalar: ℝ>(of A: Matrix<Scalar>, step h: Scalar) -> Matrix<Scalar> {
         let identity = Matrix<Scalar>.identity(size: A.rows)
-        return identity + (h * A) * (identity + (h / 2 * A) * (identity + (h / 3 * A) * (identity + (h / 4) * A)))
+        var current = identity
+        var next = Matrix<Scalar>(rows: 0, columns: 0, storage: [])
+        for divisor in [4, 3, 2, 1] as [Scalar] {
+            Matrix.multiply(A, current, into: &next)
+            next *= h / divisor
+            next += identity
+            swap(&current, &next)
+        }
+        return current
     }
 
     /// RK4 on a **linear, time-invariant** system `dy/dt = A·y`, with step `h`, sampled every
