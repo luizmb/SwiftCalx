@@ -114,4 +114,29 @@ public struct Matrix<Scalar: ℝ>: Equatable, Sendable where Scalar: Sendable {
         }
         return current
     }
+
+    /// `self^exponent` by repeated squaring: about `2·log₂(exponent)` products rather than
+    /// `exponent − 1`. `raised(to: 0)` (or a negative exponent) is the identity.
+    ///
+    /// Like ``squared(times:)`` it alternates buffers, so the whole power allocates three
+    /// matrices. Square matrices only.
+    @inlinable
+    public func raised(to exponent: Int) -> Matrix {
+        var result = Matrix.identity(size: rows)
+        var base = self
+        var scratch = Matrix(rows: 0, columns: 0, storage: [])
+        var remaining = exponent
+        while remaining > 0 {
+            if remaining & 1 == 1 {
+                Matrix.multiply(result, base, into: &scratch)
+                swap(&result, &scratch)
+            }
+            remaining >>= 1
+            if remaining > 0 {
+                Matrix.multiply(base, base, into: &scratch)
+                swap(&base, &scratch)
+            }
+        }
+        return result
+    }
 }
