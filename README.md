@@ -776,15 +776,17 @@ let values = RungeKutta45.trajectory(
     derivative: { _, y in [y[1], -4 * y[0]] },          // ω² = 4
     tolerance: 1e-8
 )
-// values: Result<[State], RungeKutta45.Failure> — on success one entry per
+// values: Result<[State], RungeKutta45.Failure<[State]>> — on success one entry per
 //         requested time, interpolated from the adaptive trajectory the
 //         integrator chose internally.
 ```
 
 Requesting a time before `startingAt` returns the initial state. Empty input returns `[]`. The integration can stop short of the last requested time in two ways, and both are a `.failure` rather than states made up for times it never reached:
 
-- `.stepLimit(reached:steps:)`: the `maxIterations` budget (accepted + rejected steps, default 10 000) ran out.
-- `.stepUnderflow(at:step:)`: the controller wanted a step below `minStep`.
+- `.stepLimit(reached:steps:partial:)`: the `maxIterations` budget (accepted + rejected steps, default 10 000) ran out.
+- `.stepUnderflow(at:step:partial:)`: the controller wanted a step below `minStep`.
+
+Either way `partial` holds what was computed before the stop: the states for the leading output times up to `reachedTime` (`denseSegments`: the accepted segments), as accurate as a finished run's. A caller can show those and mark where the integration stopped, instead of nothing.
 
 **Size the budget to the problem.** On a stiff system an explicit method is held near its stability limit, `h ≈ 3.3 / |λ_max|` for Dormand–Prince, whatever the tolerance asks for: a 19-compartment biokinetic model whose fastest rate is 35/day takes ~12 steps per day at any tolerance from `1e-6` to `1e-14`, so 1 000 days need ~12 000 steps. A bound on `|λ_max|` comes straight from the matrix (the largest row sum of `|aᵢⱼ|`), so `days × bound / 3.3` with a safety factor is a budget that grows with the span. Because those steps are set by stability, a tight tolerance is nearly free there (`1e-14` cost 10% more steps than `1e-6`).
 
@@ -797,7 +799,7 @@ let segments = RungeKutta45.denseSegments(
     through: 10,
     tolerance: 1e-8
 )
-// segments: Result<[RungeKutta45.Segment], RungeKutta45.Failure> — startTime, endTime,
+// segments: Result<[RungeKutta45.Segment], RungeKutta45.Failure<[RungeKutta45.Segment]>> — startTime, endTime,
 //           startState, endState, startSlope, endSlope per accepted step.
 // Use RungeKutta45.cubicHermite(at:on:) to interpolate inside one segment.
 ```

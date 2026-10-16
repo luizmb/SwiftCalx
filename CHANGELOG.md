@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- A stopped RK45 integration kept what it had computed only to throw it away. `RungeKutta45.Failure`
+  now carries it: `.stepLimit(reached:steps:partial:)` / `.stepUnderflow(at:step:partial:)`, with
+  `reachedTime`, `partial` and `mapPartial(_:)`. `trajectory(at:…)` fails with the states for the
+  leading output times up to the stop (`Failure<[State]>`), `denseSegments(…)` with the segments it
+  accepted (`Failure<[Segment<State>]>`). Callers that match the cases add the `partial` binding.
+
+## [1.1.0] - 2026-10-16
+
 ### Added
 - `RungeKutta4.propagator(of:step:)` and `RungeKutta4.linearTrajectory(of:from:step:stepsPerSample:count:)`:
   RK4 on a linear, time-invariant system `dy/dt = A·y` as its propagator
